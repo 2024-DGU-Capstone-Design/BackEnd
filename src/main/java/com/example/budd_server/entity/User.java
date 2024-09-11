@@ -8,6 +8,7 @@ import lombok.*;
 public class User {
     @Id
     private String id;
+    private int user_id;
     private String name;
     private int age;
     private String gender;
