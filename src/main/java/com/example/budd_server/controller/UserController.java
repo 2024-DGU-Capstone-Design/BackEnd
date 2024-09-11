@@ -27,6 +27,14 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    // 이름으로 사용자 조회
+    @GetMapping("/users/search")
+    public ResponseEntity<List<User>> getSomeUsers(@RequestParam String name) {
+        List<User> users = userService.getUserByName(name);
+        System.out.println("Search Users from service: " + users);
+        return ResponseEntity.ok(users);
+    }
+
     // 새로운 사용자 추가 또는 수정
     @PostMapping
     public ResponseEntity<User> saveUser(@RequestBody User user) {
