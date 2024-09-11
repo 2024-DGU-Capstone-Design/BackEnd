@@ -4,9 +4,10 @@ import com.example.budd_server.entity.Response;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface ModalRepository extends MongoRepository<Response, String> {
-    List<Response> findByUserId(int userId);
+public interface ResponseRepository extends MongoRepository<Response, String> {
+    List<Response> findByUserIdAndDateBetween(int userId, LocalDate startDate, LocalDate endDate);
 }
