@@ -13,8 +13,8 @@ public class Response {
     private String id;
     private int userId;
     private LocalDate date;
-    private boolean meal;
-    private boolean disease;
-    private boolean medicine;
-    private boolean mood;
+    private Boolean meal;
+    private Boolean disease;
+    private Boolean medicine;
+    private Boolean mood;
 }
