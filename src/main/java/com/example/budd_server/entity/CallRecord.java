@@ -13,6 +13,9 @@ public class CallRecord {
     private String id;
     private int userId;
     private LocalDate scheduledDate;
-    private boolean additionalCall;
-    private String status;
+    private CallStatus status;
+
+    public enum CallStatus {
+        completed, missed, scheduled, additional, noResponse
+    }
 }
