@@ -30,6 +30,22 @@ public class ModalService {
         LocalDate lastDayOfMonth = now.withDayOfMonth(now.lengthOfMonth());
 
         List<Response> responses = responseRepository.findByUserIdAndDateBetween(userId, firstDayOfMonth, lastDayOfMonth);
+
+        // null 값 처리해줘야 함
+        for (Response response : responses) {
+            if (response.getMeal() == null) {
+                response.setMeal(false); // 기본값 설정
+            }
+            if (response.getDisease() == null) {
+                response.setDisease(false);
+            }
+            if (response.getMedicine() == null) {
+                response.setMedicine(false);
+            }
+            if (response.getMood() == null) {
+                response.setMood(false);
+            }
+        }
         System.out.println("Retrieved responses from repository: " + responses);
         return responses;
     }
