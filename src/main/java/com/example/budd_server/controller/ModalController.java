@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 // 요청할 때
-/* 사용자의 응답 데이터를 조회하려면: /api/call?userId=1&type=response
-   사용자의 레포트 데이터를 조회하려면: /api/call?userId=1&type=report
-   사용자의 통화 기록을 조회하려면: /api/call?userId=1&type=callRecord */
+/* 사용자의 응답 데이터를 조회하려면: /api/call/1/response
+   사용자의 레포트 데이터를 조회하려면: /api/call/1/report
+   사용자의 통화 기록을 조회하려면: /api/call/1/callRecord */
 
 @RestController
 @RequestMapping("/api")
@@ -21,8 +21,8 @@ public class ModalController {
     @Autowired
     private ModalService modalService;
 
-    @GetMapping("/call")
-    public ResponseEntity<?> getData(@RequestParam int userId, @RequestParam String type) {
+    @GetMapping("/call/{userId}/{type}")
+    public ResponseEntity<?> getData(@PathVariable int userId, @PathVariable String type) {
         if ("response".equalsIgnoreCase(type)) {
             List<Response> responses = modalService.getResponse(userId);
             if (responses == null || responses.isEmpty()) {
