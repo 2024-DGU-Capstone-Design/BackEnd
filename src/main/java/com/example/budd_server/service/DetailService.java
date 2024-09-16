@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-public class ModalService {
+public class DetailService {
     @Autowired
     ResponseRepository responseRepository;
 
