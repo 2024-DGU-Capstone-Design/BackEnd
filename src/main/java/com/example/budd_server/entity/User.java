@@ -8,14 +8,13 @@ import lombok.*;
 public class User {
     @Id
     private String id;
-    private int user_id;
+    private int userId;
     private String name;
     private int age;
     private String gender;
-    private String phone_number;
+    private String phoneNumber;
     private String address;
-    private String contact_1;
-    private String contact_2;
-    private String risk_level;
-
+    private String contact1;
+    private String contact2;
+    private String riskLevel;
 }
