@@ -33,4 +33,28 @@ public class UserService {
             throw new NoSuchElementException("User not found with userId: " + userId);
         }
     }
+
+    public User updateUser(User existingUser) {
+        return userRepository.save(existingUser);
+    }
+
+    public Optional<User> getUserById(int userId) {
+        return userRepository.findByUserId(userId);
+    }
+
+    public User createUser(User newUser) {
+        // 현재 최대 userId를 조회
+        Integer maxUserId = userRepository.findMaxUserId();
+
+        // 새로운 userId 설정
+        if (maxUserId == null) {
+            newUser.setUserId(1); // 첫 번째 사용자일 경우
+        } else {
+            newUser.setUserId(maxUserId + 1); // 현재 최대 userId에 1을 더함
+        }
+
+        return userRepository.save(newUser);
+    }
 }
+
+

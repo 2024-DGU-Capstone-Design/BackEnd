@@ -46,4 +46,35 @@ public class UserController {
             return ResponseEntity.notFound().build(); // 404 Not Found
         }
     }
+
+    // 사용자 정보 수정
+    @PutMapping("/users/{userId}")
+    public ResponseEntity<User> updateUser(@PathVariable int userId, @RequestBody User updatedUser) {
+        Optional<User> userOptional = userService.getUserById(userId);
+
+        if (userOptional.isPresent()) {
+            User existingUser = userOptional.get();
+
+            existingUser.setName(updatedUser.getName());
+            existingUser.setAge(updatedUser.getAge());
+            existingUser.setGender(updatedUser.getGender());
+            existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
+            existingUser.setAddress(updatedUser.getAddress());
+            existingUser.setContact1(updatedUser.getContact1());
+            existingUser.setContact2(updatedUser.getContact2());
+            existingUser.setRiskLevel(updatedUser.getRiskLevel());
+
+            User savedUser = userService.updateUser(existingUser);
+            return ResponseEntity.ok(savedUser); // 200 OK
+        } else {
+            return ResponseEntity.notFound().build(); //404 Not Found
+        }
+    }
+
+    // 사용자 추가
+    @PostMapping("/users")
+    public ResponseEntity<User> createUser(@RequestBody User newUser) {
+        User createdUser = userService.createUser(newUser);
+        return ResponseEntity.ok(createdUser);
+    }
 }
