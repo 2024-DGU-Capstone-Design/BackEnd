@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -19,12 +20,17 @@ public class UserService {
         return users;
     }
 
-    public List<User> getUserByName(String name){
+    public List<User> getUserByName(String name) {
         return userRepository.findByName(name);
     }
 
-    public User saveUser(User user) {
-        return userRepository.save(user);
-    } // 사용자 추가 또는 수정
-
+    public void deleteUserByUserId(int userId) {
+        Optional<User> userOptional = userRepository.findByUserId(userId);
+        if (userOptional.isPresent()) {
+            String id = userOptional.get().getId();
+            userRepository.deleteById(id); // ObjectId로 삭제
+        } else {
+            throw new NoSuchElementException("User not found with userId: " + userId);
+        }
+    }
 }
