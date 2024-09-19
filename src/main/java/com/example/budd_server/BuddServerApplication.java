@@ -4,8 +4,10 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling // 스케줄링 어노테이션 추가
 @EnableMongoRepositories(basePackages = "com.example.budd_server.repository")
 public class BuddServerApplication {
 
