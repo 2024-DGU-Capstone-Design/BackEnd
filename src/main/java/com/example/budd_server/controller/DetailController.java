@@ -44,7 +44,7 @@ public class DetailController {
             return ResponseEntity.ok(reports);
         } else if ("callRecord".equalsIgnoreCase(type)) {
             // 통화 기록 데이터 조회
-            List<CallRecord> callRecords = detailService.getCallRecordByUserIdAndMonth(userId);
+            List<CallRecord> callRecords = detailService.getCallRecordByUserIdAndYear(userId);
             if (callRecords == null || callRecords.isEmpty()) {
                 return ResponseEntity.status(404).body("callRecords 데이터를 찾을 수 없습니다.");
             }
