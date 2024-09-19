@@ -46,20 +46,17 @@ public class DetailService {
         return reports;
     }
 
-    // 이번 분기의 통화 기록 조회
-    public List<CallRecord> getCallRecordByUserIdAndMonth(int userId) {
+    // 1년 단위로 통화 기록 조회
+    public List<CallRecord> getCallRecordByUserIdAndYear(int userId) {
         LocalDate now = LocalDate.now();
 
-        // 현재 달을 기준으로 분기의 시작 월과 종료 월 계산
-        int currentMonth = now.getMonthValue();
-        int startQuarterMonth = ((currentMonth - 1) / 3) * 3 + 1;  // 1, 4, 7, 10 중 하나
-        LocalDate startQuarter = now.withMonth(startQuarterMonth).withDayOfMonth(1);  // 분기 시작일
-        LocalDate endQuarter = startQuarter.plusMonths(2).withDayOfMonth(startQuarter.plusMonths(2).lengthOfMonth());  // 분기 종료일
+        // 현재 년도의 시작일과 종료일 계산
+        LocalDate startYear = now.withMonth(1).withDayOfMonth(1);  // 해당 년도의 1월 1일
+        LocalDate endYear = now.withMonth(12).withDayOfMonth(31);  // 해당 년도의 12월 31일
 
-        List<CallRecord> callRecords = callRecordRepository.findByUserIdAndScheduledDateBetween(userId, startQuarter, endQuarter);
-        System.out.println("Retrieved callRecords from repository: " + callRecords);
+        List<CallRecord> callRecords = callRecordRepository.findByUserIdAndScheduledDateBetween(userId, startYear, endYear);
+        System.out.println("Retrieved callRecords from repository (for the year): " + callRecords);
         return callRecords;
     }
 }
-
 
