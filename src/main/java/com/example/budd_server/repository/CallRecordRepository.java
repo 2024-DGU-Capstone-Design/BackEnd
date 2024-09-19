@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface CallRecordRepository extends MongoRepository<CallRecord, String> {
-    List<CallRecord> findByUserIdAndScheduledDateBetween(int userId, LocalDate startDate, LocalDate endDate);
+    List<CallRecord> findByUserIdAndScheduledDateBetween(int userId, LocalDate startYear, LocalDate endYear);
 
     List<CallRecord> findByUserId(int userId);
 }
