@@ -5,14 +5,12 @@ import com.example.budd_server.entity.User;
 import com.example.budd_server.repository.CallRecordRepository;
 import com.example.budd_server.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ScheduleCallService {
@@ -23,30 +21,29 @@ public class ScheduleCallService {
     @Autowired
     UserRepository userRepository;
 
-    // 이번 분기의 전화 일정 생성
-    public List<CallRecord> scheduleCurrentQuarterCalls(int userId) {
-        // User의 riskLevel을 가져옴
-        Optional<User> userOptional = userRepository.findByUserId(userId);
-        if (!userOptional.isPresent()) {
-            throw new IllegalArgumentException("User not found with userId: " + userId);
+    // 이번 분기의 전화 일정 생성 (모든 사용자 대상)
+    @Scheduled(cron = "0 0 1 1 1,4,7,10 ?") // 분기 첫 날 새벽 1시에 자동 실행
+    public void scheduleCurrentQuarterCallsForAllUsers() {
+        // 모든 사용자를 가져옴
+        List<User> users = userRepository.findAll();
+
+        for (User user : users) {
+            String riskLevel = user.getRiskLevel();
+            int userId = user.getUserId();
+
+            // 이번 분기의 시작일과 종료일을 계산
+            LocalDate now = LocalDate.now();
+            LocalDate startOfQuarter = getStartOfQuarter(now).plusDays(1);
+            LocalDate endOfQuarter = startOfQuarter.plusMonths(3).minusDays(1);  // 이번 분기 마지막 날
+
+            // 전화 일정 생성
+            List<CallRecord> callSchedule = createCallSchedule(userId, startOfQuarter, endOfQuarter, getCallIntervalDays(riskLevel));
+
+            // DB에 저장
+            callRecordRepository.saveAll(callSchedule);
+
+            System.out.println("Scheduled current quarter calls for userId " + userId + ": " + callSchedule);
         }
-
-        User user = userOptional.get();
-        String riskLevel = user.getRiskLevel();
-
-        // 이번 분기의 시작일과 종료일을 계산
-        LocalDate now = LocalDate.now();
-        LocalDate startOfQuarter = getStartOfQuarter(now).plusDays(1);
-        LocalDate endOfQuarter = startOfQuarter.plusMonths(3).minusDays(1);  // 이번 분기 마지막 날
-
-        // 전화 일정 생성
-        List<CallRecord> callSchedule = createCallSchedule(userId, startOfQuarter, endOfQuarter, getCallIntervalDays(riskLevel));
-
-        // DB에 저장
-        callRecordRepository.saveAll(callSchedule);
-
-        System.out.println("Scheduled current quarter calls for userId " + userId + ": " + callSchedule);
-        return callSchedule;
     }
 
     // 분기의 시작일 계산
@@ -74,15 +71,12 @@ public class ScheduleCallService {
         List<CallRecord> callSchedule = new ArrayList<>();
         LocalDate scheduledDate = startDate;
 
-
-
         // 주기적으로 전화 일정 생성
         while (!scheduledDate.isAfter(endDate)) {
             CallRecord callRecord = new CallRecord();
             callRecord.setUserId(userId);
             callRecord.setScheduledDate(scheduledDate);
             callRecord.setStatus(CallRecord.CallStatus.scheduled);
-
 
             callSchedule.add(callRecord);
 
