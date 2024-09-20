@@ -1,5 +1,6 @@
 package com.example.budd_server.controller;
 
+import com.example.budd_server.entity.CallRecord;
 import com.example.budd_server.entity.Report;
 import com.example.budd_server.entity.Response;
 import com.example.budd_server.entity.User;
@@ -48,6 +49,13 @@ public class DetailController {
                 return ResponseEntity.status(404).body("Report 데이터를 찾을 수 없습니다.");
             }
             return ResponseEntity.ok(reports);
+        } else if ("callRecord".equalsIgnoreCase(type)) {
+            // 통화 기록 데이터 조회
+            List<CallRecord> callRecords = detailService.getCallRecordByUserIdAndYear(userId);
+            if (callRecords == null || callRecords.isEmpty()) {
+                return ResponseEntity.status(404).body("callRecords 데이터를 찾을 수 없습니다.");
+            }
+            return ResponseEntity.ok(callRecords);
         } else if ("user".equalsIgnoreCase(type)) {
             // 사용자 정보 조회
             Optional<User> user = userService.getUserById(userId);
