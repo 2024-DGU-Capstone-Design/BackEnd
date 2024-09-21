@@ -47,7 +47,7 @@ public class ScheduleCallService {
         }
     }
 
-    /// 새로운 사용자가 추가될 때 일정을 생성하는 메소드 (추가부분)
+    // 새로운 사용자가 추가될 때 일정을 생성하는 메소드 (추가부분)
     public void scheduleCallsForNewUser(User user) {
         LocalDate today = LocalDate.now();
         LocalDate firstCallDate = today.plusDays(1); // 추가된 날로부터 하루 뒤
