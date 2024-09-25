@@ -11,7 +11,10 @@ public class User {
     private int userId;
     private String name;
     private int age;
-    private String gender;
+    private Gender gender;
+    public enum Gender {
+        남, 여
+    }
     private String phoneNumber;
     private String address;
     private String contact1;

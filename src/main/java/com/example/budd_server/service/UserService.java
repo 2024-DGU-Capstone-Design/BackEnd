@@ -14,6 +14,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository; // spring이 인스턴스 자동 주입
 
+    @Autowired
+    private ScheduleCallService scheduleCallService;
+
     public List<User> getAllUsers() {
         List<User> users = userRepository.findAll();
         System.out.println("Retrieved users from repository: " + users); // 로그 추가
@@ -53,7 +56,13 @@ public class UserService {
             newUser.setUserId(maxUserId + 1); // 현재 최대 userId에 1을 더함
         }
 
-        return userRepository.save(newUser);
+        // 새로운 사용자 생성
+        User createdUser = userRepository.save(newUser);
+
+        // 새로운 사용자 추가 시, 전화 일정 생성
+        scheduleCallService.scheduleCallsForNewUser(createdUser);
+
+        return createdUser;
     }
 }
 

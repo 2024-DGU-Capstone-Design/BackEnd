@@ -4,6 +4,7 @@ import com.example.budd_server.entity.CallRecord;
 import com.example.budd_server.entity.Report;
 import com.example.budd_server.entity.Response;
 import com.example.budd_server.entity.User;
+import com.example.budd_server.entity.User.Gender;
 import com.example.budd_server.service.DetailService;
 import com.example.budd_server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,7 +80,14 @@ public class DetailController {
 
             existingUser.setName(updatedUser.getName());
             existingUser.setAge(updatedUser.getAge());
-            existingUser.setGender(updatedUser.getGender());
+            // 성별을 enum으로 변환하여 설정
+            try {
+                User.Gender genderEnum = User.Gender.valueOf(updatedUser.getGender().toString().toUpperCase());
+                existingUser.setGender(genderEnum);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.notFound().build();
+            }
+
             existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
             existingUser.setAddress(updatedUser.getAddress());
             existingUser.setContact1(updatedUser.getContact1());
