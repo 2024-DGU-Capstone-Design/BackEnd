@@ -1,10 +1,10 @@
 package com.example.budd_server.controller;
 
+import com.example.budd_server.dto.UserDetailDto;
 import com.example.budd_server.entity.CallRecord;
 import com.example.budd_server.entity.Report;
 import com.example.budd_server.entity.Response;
 import com.example.budd_server.entity.User;
-import com.example.budd_server.entity.User.Gender;
 import com.example.budd_server.service.DetailService;
 import com.example.budd_server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +33,19 @@ public class DetailController {
 
     @Autowired
     private UserService userService;
+
+    // 사용자 정보, 통화기록, 응답데이터, 리포트 전부 한번에 조회
+    @GetMapping("/detail/{userId}")
+    public ResponseEntity<?> getUserDetails(@PathVariable int userId) {
+        try {
+            UserDetailDto userDetails = detailService.getUserDetails(userId);
+
+            // 데이터가 있을 경우 200 OK로 응답
+            return ResponseEntity.ok(userDetails);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body("해당 사용자의 데이터를 찾을 수 없습니다.");
+        }
+    }
 
     @GetMapping("/detail/{userId}/{type}")
     public ResponseEntity<?> getData(@PathVariable int userId, @PathVariable String type) {
