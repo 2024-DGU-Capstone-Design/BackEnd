@@ -56,6 +56,15 @@ public class UserService {
             newUser.setUserId(maxUserId + 1); // 현재 최대 userId에 1을 더함
         }
 
+        // 나이에 따라 위험군 설정
+        if (newUser.getAge() >= 80) {
+            newUser.setRiskLevel("고");
+        } else if (newUser.getAge() < 70) {
+            newUser.setRiskLevel("저");
+        } else {
+            newUser.setRiskLevel("중");
+        }
+
         // 새로운 사용자 생성
         User createdUser = userRepository.save(newUser);
 
