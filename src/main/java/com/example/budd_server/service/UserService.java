@@ -3,6 +3,9 @@ package com.example.budd_server.service;
 import com.example.budd_server.entity.User;
 import com.example.budd_server.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +20,12 @@ public class UserService {
     @Autowired
     private ScheduleCallService scheduleCallService;
 
-    public List<User> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        System.out.println("Retrieved users from repository: " + users); // 로그 추가
-        return users;
+    // 전체 사용자 목록을 페이지네이션을 적용하여 가져오는 메소드
+    public Page<User> getAllUsersByPage(int page) {
+        Pageable pageable = PageRequest.of(page, 10);  // 페이지 번호와 페이지 크기(10명) 설정
+        return userRepository.findAll(pageable);
     }
+
 
     public List<User> getUserByName(String name) {
         return userRepository.findByName(name);

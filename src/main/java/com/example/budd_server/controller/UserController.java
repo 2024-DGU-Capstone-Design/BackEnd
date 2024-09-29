@@ -3,6 +3,8 @@ package com.example.budd_server.controller;
 import com.example.budd_server.entity.User;
 import com.example.budd_server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,12 +20,13 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    // 모든 사용자 조회
+    // 모든 사용자 조회 (페이지네이션 적용, 유저만)
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        System.out.println("Users from service: " + users); // 로그 추가
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<User>> getAllUsersByPage(
+            @RequestParam(defaultValue = "1") int page  // 1번째 페이지부터
+    ) {
+        Page<User> users = userService.getAllUsersByPage(page-1);  // 페이지 단위로 사용자 목록 가져오기
+        return ResponseEntity.ok(users.getContent());
     }
 
     // 이름으로 사용자 조회
