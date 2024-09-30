@@ -25,6 +25,7 @@ import java.util.Optional;
         리포트 데이터 조회: /api/detail/{userId}/report
         통화 기록 조회: /api/detail/{userId}/callRecord */
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api")
 public class DetailController {
