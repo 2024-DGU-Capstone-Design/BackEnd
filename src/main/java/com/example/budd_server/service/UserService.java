@@ -23,7 +23,14 @@ public class UserService {
     // 전체 사용자 목록을 페이지네이션을 적용하여 가져오는 메소드
     public Page<User> getAllUsersByPage(int page) {
         Pageable pageable = PageRequest.of(page, 10);  // 페이지 번호와 페이지 크기(10명) 설정
-        return userRepository.findAll(pageable);
+        Page<User> usersPage = userRepository.findAll(pageable);
+
+        // 현재 페이지가 전체 페이지 수를 초과하는 경우
+        if (page >= usersPage.getTotalPages()) {
+            throw new IllegalArgumentException("더 이상 페이지가 존재하지 않습니다.");
+        }
+
+        return usersPage;
     }
 
 
