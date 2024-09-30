@@ -23,11 +23,10 @@ public class UserController {
 
     // 모든 사용자 조회 (페이지네이션 적용, 유저만)
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsersByPage(
-            @RequestParam(defaultValue = "1") int page  // 1번째 페이지부터
-    ) {
-        Page<User> users = userService.getAllUsersByPage(page-1);  // 페이지 단위로 사용자 목록 가져오기
-        return ResponseEntity.ok(users.getContent());
+    public ResponseEntity<Page<User>> getAllUsersByPage(
+            @RequestParam(defaultValue = "1") int page) {
+        Page<User> usersPage = userService.getAllUsersByPage(page);
+        return ResponseEntity.ok(usersPage);  // Page 객체 반환
     }
 
     // 이름으로 사용자 조회
