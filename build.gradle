@@ -35,6 +35,12 @@ dependencies {
 
 	// mongoDB를 위한 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+	// ChatGPT를 위한 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 }
 
 tasks.named('test') {
