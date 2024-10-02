@@ -2,8 +2,10 @@ package com.example.budd_server.impl;
 
 import com.example.budd_server.config.ChatGPTConfig;
 import com.example.budd_server.dto.ChatGPTDto;
+import com.example.budd_server.entity.Report;
 import com.example.budd_server.entity.Response;
 import com.example.budd_server.entity.User;
+import com.example.budd_server.repository.ReportRepository;
 import com.example.budd_server.repository.ResponseRepository;
 import com.example.budd_server.repository.UserRepository;
 import com.example.budd_server.service.ChatGPTService;
@@ -35,6 +37,9 @@ public class ChatGPTServiceImpl implements ChatGPTService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    ReportRepository reportRepository;
 
     private final ChatGPTConfig chatGPTConfig;
 
@@ -78,6 +83,13 @@ public class ChatGPTServiceImpl implements ChatGPTService {
         LocalDate startDate = now.minusMonths(1).withDayOfMonth(1);
         LocalDate endDate = now.minusMonths(1).withDayOfMonth(now.minusMonths(1).lengthOfMonth());
 
+        // MongoDB에서 해당 유저의 이전 달 리포트가 있는지 확인
+        Optional<Report> existingReport = reportRepository.findByUserIdAndMonth(userId, now.minusMonths(1));
+        if (existingReport.isPresent()) {
+            System.out.println("이미 리포트가 존재합니다: " + existingReport.get().getTitle());
+            return null;
+        }
+
         // MongoDB에서 해당 유저의 이전 달 데이터를 가져옴
         List<Response> userData = responseRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
         System.out.println("User Data: " + userData); // 데이터 확인
@@ -99,6 +111,46 @@ public class ChatGPTServiceImpl implements ChatGPTService {
         // 생성된 입력 데이터 출력
         System.out.println("Generated Prompt: " + chatGPTDto.getPrompt());
 
+        // ChatGPT API 호출하여 결과 가져오기
+        Map<String, Object> chatGPTResponse = legacyPrompt(chatGPTDto);
+
+        // 리포트 객체 생성
+        Report report = new Report();
+        report.setUserId(userId);
+        report.setMonth(now.minusMonths(1));
+        report.setTitle(userName + "님의 종합 리포트");
+
+        // API 응답에서 텍스트 내용 추출
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) chatGPTResponse.get("choices");
+        if (choices != null && !choices.isEmpty()) {
+            String responseText = (String) choices.get(0).get("text");
+
+            report.setMealStatus(extractStatus(responseText, "식사 상태"));
+            report.setHealthStatus(extractStatus(responseText, "건강 상태"));
+            report.setEmotionStatus(extractStatus(responseText, "정서적 상태"));
+            report.setEvaluation(extractStatus(responseText, "종합 평가"));
+        } else {
+            System.out.println("ChatGPT 응답이 유효하지 않습니다.");
+            report.setMealStatus("정보 없음");
+            report.setHealthStatus("정보 없음");
+            report.setEmotionStatus("정보 없음");
+            report.setEvaluation("정보 없음");
+        }
+
+        report.setConclusion(userName + "님의 건강과 행복을 기원하며, 앞으로도 지속적인 관심과 사랑을 부탁드립니다");
+
+        // 리포트 저장
+        reportRepository.save(report);
+
+        // 저장된 리포트 내용 확인
+        System.out.println("리포트 저장 완료:");
+        System.out.println("제목: " + report.getTitle());
+        System.out.println("식사 상태: " + report.getMealStatus());
+        System.out.println("건강 상태: " + report.getHealthStatus());
+        System.out.println("정서적 상태: " + report.getEmotionStatus());
+        System.out.println("종합 평가: " + report.getEvaluation());
+        System.out.println("마무리: " + report.getConclusion());
+
         return chatGPTDto;
     }
 
@@ -118,5 +170,17 @@ public class ChatGPTServiceImpl implements ChatGPTService {
         }
 
         return status.toString();
+    }
+
+    private String extractStatus(String responseText, String statusType) {
+        // 상태 텍스트를 정규 표현식이나 간단한 문자열 탐색을 통해 추출
+        String[] lines = responseText.split("\n");
+        for (String line : lines) {
+            if (line.contains("[" + statusType + "]")) {
+                // 상태 정보를 반환 (예: "박영희님의 한달간 식사 상태는 안정적입니다."와 같은 전체 문장을 반환)
+                return line.substring(line.indexOf(":") + 1).trim();
+            }
+        }
+        return "정보 없음"; // 해당 상태 정보가 없을 경우
     }
 }
