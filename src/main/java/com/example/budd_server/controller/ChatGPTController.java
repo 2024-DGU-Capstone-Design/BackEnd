@@ -36,4 +36,21 @@ public class ChatGPTController {
         Map<String, Object> result = chatGPTService.legacyPrompt(chatGPTDto);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
+
+    // 유저 아이디 받아서 자동 프롬프트 설정 후 ChatGPT API 호출
+    @PostMapping("/generateReport/{userId}")
+    public ResponseEntity<Map<String, Object>> generateUserReport(@PathVariable int userId) {
+
+        // 유저의 리포트를 생성하고 ChatGPT API로 전송할 데이터를 가공
+        ChatGPTDto chatGPTDto = chatGPTService.generateUserReport(userId);
+
+        // chatGPTDto가 null인 경우, 이미 리포트가 존재함을 알리는 응답 반환
+        if (chatGPTDto == null) {
+            return new ResponseEntity<>(Map.of("message", "이미 리포트가 존재합니다."), HttpStatus.CONFLICT);
+        }
+
+        // ChatGPT API 호출
+        Map<String, Object> result = chatGPTService.legacyPrompt(chatGPTDto);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }
