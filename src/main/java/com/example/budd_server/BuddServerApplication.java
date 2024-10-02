@@ -27,3 +27,4 @@ public class BuddServerApplication {
 		SpringApplication.run(BuddServerApplication.class, args);
 	}
 }
+//test
