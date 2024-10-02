@@ -20,6 +20,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -30,6 +32,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@EnableScheduling
 public class ChatGPTServiceImpl implements ChatGPTService {
 
     @Autowired
@@ -45,6 +48,26 @@ public class ChatGPTServiceImpl implements ChatGPTService {
 
     public ChatGPTServiceImpl(ChatGPTConfig chatGPTConfig) {
         this.chatGPTConfig = chatGPTConfig;
+    }
+
+    // 매달 1일 00:00에 리포트 생성
+    @Scheduled(cron = "0 0 0 1 * ?") // Cron 표현식: 매달 1일 00:00
+    public void generateReportsForAllUsers() {
+        List<User> allUsers = userRepository.findAll(); // 모든 사용자 조회
+        for (User user : allUsers) {
+            int userId = user.getUserId(); // 사용자 ID 가져오기
+            // 리포트 생성 호출
+            try {
+                generateUserReport(userId);
+                System.out.println("User ID: " + userId + "에 대한 리포트가 생성되었습니다.");
+            } catch (IllegalStateException e) {
+                // 이미 리포트가 존재하는 경우
+                System.out.println("User ID: " + userId + "에 대한 리포트가 이미 존재합니다. " + e.getMessage());
+            } catch (Exception e) {
+                // 다른 예외 처리
+                System.out.println("User ID: " + userId + "에 대한 리포트 생성 중 오류 발생: " + e.getMessage());
+            }
+        }
     }
 
     @Value("${openai.url.legacy-prompt}")
@@ -86,8 +109,7 @@ public class ChatGPTServiceImpl implements ChatGPTService {
         // MongoDB에서 해당 유저의 이전 달 리포트가 있는지 확인
         Optional<Report> existingReport = reportRepository.findByUserIdAndMonth(userId, now.minusMonths(1));
         if (existingReport.isPresent()) {
-            System.out.println("이미 리포트가 존재합니다: " + existingReport.get().getTitle());
-            return null;
+            throw new IllegalStateException("이미 리포트가 존재합니다.");
         }
 
         // MongoDB에서 해당 유저의 이전 달 데이터를 가져옴
@@ -120,10 +142,12 @@ public class ChatGPTServiceImpl implements ChatGPTService {
         report.setMonth(now.minusMonths(1));
         report.setTitle(userName + "님의 종합 리포트");
 
+        @SuppressWarnings("unchecked")
         // API 응답에서 텍스트 내용 추출
         List<Map<String, Object>> choices = (List<Map<String, Object>>) chatGPTResponse.get("choices");
         if (choices != null && !choices.isEmpty()) {
             String responseText = (String) choices.get(0).get("text");
+            System.out.println("ChatGPT 응답 텍스트: " + responseText);
 
             report.setMealStatus(extractStatus(responseText, "식사 상태"));
             report.setHealthStatus(extractStatus(responseText, "건강 상태"));
@@ -139,17 +163,8 @@ public class ChatGPTServiceImpl implements ChatGPTService {
 
         report.setConclusion(userName + "님의 건강과 행복을 기원하며, 앞으로도 지속적인 관심과 사랑을 부탁드립니다");
 
-        // 리포트 저장
         reportRepository.save(report);
-
-        // 저장된 리포트 내용 확인
-        System.out.println("리포트 저장 완료:");
-        System.out.println("제목: " + report.getTitle());
-        System.out.println("식사 상태: " + report.getMealStatus());
-        System.out.println("건강 상태: " + report.getHealthStatus());
-        System.out.println("정서적 상태: " + report.getEmotionStatus());
-        System.out.println("종합 평가: " + report.getEvaluation());
-        System.out.println("마무리: " + report.getConclusion());
+        System.out.println("userId " + userId + " 리포트가 저장되었습니다");
 
         return chatGPTDto;
     }
@@ -160,13 +175,16 @@ public class ChatGPTServiceImpl implements ChatGPTService {
 
         for (Response data : userData) {
             String result = switch (field) {
-                case "meal" -> data.getMeal() ? "o" : "x";
-                case "disease" -> data.getDisease() ? "o" : "x";
-                case "medicine" -> data.getMedicine() ? "o" : "x";
-                case "mood" -> data.getMood() ? "o" : "x";
+                case "meal" -> (data.getMeal() != null) ? (data.getMeal() ? "o" : "x") : ""; // null 처리 추가
+                case "disease" -> (data.getDisease() != null) ? (data.getDisease() ? "o" : "x") : "";
+                case "medicine" -> (data.getMedicine() != null) ? (data.getMedicine() ? "o" : "x") : "";
+                case "mood" -> (data.getMood() != null) ? (data.getMood() ? "o" : "x") : "";
                 default -> ""; // Handle unexpected field cases if necessary
             };
-            status.append(result);
+
+            if (!result.isEmpty()) {
+                status.append(result); // 결과가 있는 경우에만 추가
+            }
         }
 
         return status.toString();

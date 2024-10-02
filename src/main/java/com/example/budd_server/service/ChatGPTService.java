@@ -10,4 +10,6 @@ public interface ChatGPTService {
     Map<String, Object> legacyPrompt(ChatGPTDto chatGPTDto);
 
     ChatGPTDto generateUserReport(int userId);
+
+    void generateReportsForAllUsers();
 }
