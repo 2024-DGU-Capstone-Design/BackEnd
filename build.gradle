@@ -35,6 +35,10 @@ dependencies {
 
 	// mongoDB를 위한 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+	// twilio 사용
+	implementation 'com.twilio.sdk:twilio:8.29.0'
+
 }
 
 tasks.named('test') {
