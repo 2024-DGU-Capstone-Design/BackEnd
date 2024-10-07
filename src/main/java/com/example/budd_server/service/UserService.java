@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class UserService {
@@ -22,7 +23,7 @@ public class UserService {
 
     // 전체 사용자 목록을 페이지네이션을 적용하여 가져오는 메소드
     public Page<User> getAllUsersByPage(int page) {
-        Pageable pageable = PageRequest.of(page, 10);  // 페이지 번호와 페이지 크기(10명) 설정
+        Pageable pageable = PageRequest.of(page-1, 10, Sort.by("userId"));  // userId 기준으로 정렬
         Page<User> usersPage = userRepository.findAll(pageable);
 
         // 현재 페이지가 전체 페이지 수를 초과하는 경우
