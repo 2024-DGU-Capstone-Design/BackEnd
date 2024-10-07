@@ -37,6 +37,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	//call test: twilio
 	implementation 'com.twilio.sdk:twilio:8.30.1'
+	//구글 tts
+	implementation 'com.google.cloud:libraries-bom:26.44.0'
 }
 
 tasks.named('test') {
