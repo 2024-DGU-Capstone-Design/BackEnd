@@ -13,7 +13,7 @@ public class TwilioController {
     private TwilioService twilioService;
 
     @PostMapping("/call")
-    public String makeCall(@RequestParam String to) {
+    public String makeCall(@RequestParam("to") String to) {
         return twilioService.startCallFlow(to);
     }
 }

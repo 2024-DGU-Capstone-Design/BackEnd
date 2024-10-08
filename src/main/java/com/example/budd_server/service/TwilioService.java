@@ -25,8 +25,8 @@ public class TwilioService {
 
     String googleBucketURL = dotenv.get("google.bucketURL");
 
-    @Autowired
-    private GoogleTtsService googleTtsService;
+//    @Autowired
+//    private GoogleTtsService googleTtsService;
 
     // Twilio 초기화
     public TwilioService() {
