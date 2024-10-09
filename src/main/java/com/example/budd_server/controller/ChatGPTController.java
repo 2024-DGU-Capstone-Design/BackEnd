@@ -63,7 +63,7 @@ public class ChatGPTController {
                 requestData.get("event")
         );
 
-        Map<String, Object> result = chatGPTService.responsePrompt(chatGPTDto);
+        Map<String, Object> result = chatGPTService.legacyPrompt(chatGPTDto);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
