@@ -54,4 +54,16 @@ public class ChatGPTController {
         chatGPTService.generateReportsForAllUsers();
         return new ResponseEntity<>("모든 사용자에 대한 리포트 생성 완료", HttpStatus.OK);
     }
+    @PostMapping("/ResponsePrompt")
+    public ResponseEntity<Map<String, Object>> selectResponsePrompt(@RequestBody Map<String, String> requestData) {
+        ChatGPTDto chatGPTDto = new ChatGPTDto();
+
+        // 입력 데이터를 받아서 프롬프트 설정
+        chatGPTDto.setResponsePrompt(
+                requestData.get("event")
+        );
+
+        Map<String, Object> result = chatGPTService.responsePrompt(chatGPTDto);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }

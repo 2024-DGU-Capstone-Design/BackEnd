@@ -201,4 +201,29 @@ public class ChatGPTServiceImpl implements ChatGPTService {
         }
         return "정보 없음"; // 해당 상태 정보가 없을 경우
     }
+
+    @Override
+    public Map<String, Object> responsePrompt(ChatGPTDto chatGPTDto) {
+        // 토큰 정보가 포함된 Header를 가져오기
+        HttpHeaders headers = chatGPTConfig.httpHeaders();
+
+        // 통신을 위한 RestTemplate을 구성
+        HttpEntity<ChatGPTDto> requestEntity = new HttpEntity<>(chatGPTDto, headers);
+        ResponseEntity<String> response = chatGPTConfig
+                .restTemplate()
+                .exchange(legacyPromptUrl, HttpMethod.POST, requestEntity, String.class);
+
+        Map<String, Object> resultMap = new HashMap<>();
+        try {
+            ObjectMapper om = new ObjectMapper();
+            // String -> HashMap 역직렬화를 구성
+            resultMap = om.readValue(response.getBody(), new TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            log.debug("JsonMappingException :: " + e.getMessage());
+        } catch (RuntimeException e) {
+            log.debug("RuntimeException :: " + e.getMessage());
+        }
+        return resultMap;
+    }
+
 }
