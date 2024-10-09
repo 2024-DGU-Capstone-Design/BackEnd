@@ -6,6 +6,7 @@ import com.twilio.type.PhoneNumber;
 import com.twilio.type.Twiml;
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,6 +18,9 @@ public class CallService {
     private final String AUTH_TOKEN = dotenv.get("TWILIO_AUTH_TOKEN");
     private final String FROM_NUMBER = dotenv.get("TWILIO_PHONE_NUMBER");  // Twilio 발신 번호
 
+    @Autowired
+    private QuestionService questionService;
+
     @PostConstruct
     public void initTwilio() {
         Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
@@ -24,16 +28,26 @@ public class CallService {
 
     public Call makeCall(String to) {
         try {
-            Twiml twiml = new Twiml("<Response><Say>안녕하세요, 테스트 전화입니다.</Say></Response>");
+            String firstQuestion = questionService.askFirstQuestion(); // 첫 질문 가져오기
+            String twimlResponse = "<Response>" +
+                    "<Gather input='speech' action='url' timeout='10'>" +
+                    "<Say>" + firstQuestion + "</Say>" +
+                    "</Gather></Response>";
+
+            Twiml twiml = new Twiml(twimlResponse);
 
             return Call.creator(
-                    new PhoneNumber(to),
-                    new PhoneNumber(FROM_NUMBER),
-                    twiml
-            ).create();
+                            new PhoneNumber(to),
+                            new PhoneNumber(FROM_NUMBER),
+                            twiml
+                    )
+                    .setRecord(true)  // 녹음 기능 활성화
+                    .create();
         } catch (Exception e) {
             System.err.println("Error making call: " + e.getMessage());
             throw e;
         }
     }
+
+
 }
