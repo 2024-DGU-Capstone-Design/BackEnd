@@ -30,7 +30,7 @@ public class CallService {
         try {
             String firstQuestion = questionService.askFirstQuestion(); // 첫 질문 가져오기
             String twimlResponse = "<Response>" +
-                    "<Gather input='speech' action='/twilio/handle-recording' method='POST' timeout='5' speechTimeout='auto'>" +
+                    "<Gather input='speech' action='' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>" +  // 한국어 설정
                     "<Say>" + firstQuestion + "</Say>" +
                     "</Gather>" +
                     "</Response>";
@@ -42,7 +42,7 @@ public class CallService {
                             new PhoneNumber(FROM_NUMBER),
                             twiml
                     )
-                    .setRecord(true)  // 녹음 기능 활성화
+                    .setRecord(true)
                     .create();
         } catch (Exception e) {
             System.err.println("Error making call: " + e.getMessage());

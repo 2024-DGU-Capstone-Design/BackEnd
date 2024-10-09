@@ -7,14 +7,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class GoogleSTTService {
 
-    // byte[] 데이터를 처리하도록 메서드 수정
+    // byte[] 데이터를 처리
     public String transcribeAudio(byte[] audioBytes) throws Exception {
         try (SpeechClient speechClient = SpeechClient.create()) {
             // Google STT 요청 설정
             RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)  // Audio encoding 설정 (보통 LINEAR16)
+                    .setEncoding(RecognitionConfig.AudioEncoding.MP3)
                     .setSampleRateHertz(16000)  // 샘플 레이트 설정
-                    .setLanguageCode("ko-KR")  // 한국어 설정
+                    .setLanguageCode("ko-KR")
                     .build();
 
             RecognitionAudio audio = RecognitionAudio.newBuilder()
