@@ -30,9 +30,10 @@ public class CallService {
         try {
             String firstQuestion = questionService.askFirstQuestion(); // 첫 질문 가져오기
             String twimlResponse = "<Response>" +
-                    "<Gather input='speech' action='url' timeout='10'>" +
+                    "<Gather input='speech' action='/twilio/handle-recording' method='POST' timeout='5' speechTimeout='auto'>" +
                     "<Say>" + firstQuestion + "</Say>" +
-                    "</Gather></Response>";
+                    "</Gather>" +
+                    "</Response>";
 
             Twiml twiml = new Twiml(twimlResponse);
 

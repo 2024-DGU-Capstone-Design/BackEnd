@@ -4,30 +4,24 @@ import com.google.cloud.speech.v1.*;
 import com.google.protobuf.ByteString;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-
 @Service
 public class GoogleSTTService {
 
-    public String transcribeAudio(String mp3FilePath) throws IOException {
+    // byte[] 데이터를 처리하도록 메서드 수정
+    public String transcribeAudio(byte[] audioBytes) throws Exception {
         try (SpeechClient speechClient = SpeechClient.create()) {
-            // MP3 파일을 ByteString으로 변환
-            ByteString audioBytes = ByteString.copyFrom(Files.readAllBytes(new File(mp3FilePath).toPath()));
-
-            // Google STT 요청
+            // Google STT 요청 설정
             RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.MP3)
-                    .setSampleRateHertz(16000)  // 샘플 레이트 설정 (MP3일 경우 16000Hz가 일반적)
-                    .setLanguageCode("ko-KR")
+                    .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)  // Audio encoding 설정 (보통 LINEAR16)
+                    .setSampleRateHertz(16000)  // 샘플 레이트 설정
+                    .setLanguageCode("ko-KR")  // 한국어 설정
                     .build();
 
             RecognitionAudio audio = RecognitionAudio.newBuilder()
-                    .setContent(audioBytes)
+                    .setContent(ByteString.copyFrom(audioBytes))  // byte[] 데이터를 STT로 전송
                     .build();
 
-            // Google STT API 호출
+            // Google STT 호출
             RecognizeResponse response = speechClient.recognize(config, audio);
 
             // 결과 추출 및 반환
@@ -35,8 +29,6 @@ public class GoogleSTTService {
             for (SpeechRecognitionResult result : response.getResultsList()) {
                 String transcript = result.getAlternativesList().get(0).getTranscript();
                 transcription.append(transcript);
-
-                // 변환된 텍스트를 콘솔에 출력
                 System.out.println("Transcribed Text: " + transcript);
             }
 
