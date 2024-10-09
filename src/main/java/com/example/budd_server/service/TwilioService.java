@@ -30,8 +30,8 @@ public class TwilioService {
 
     String ngrokBaseURL = dotenv.get("ngrok.baseURL");
 
-    @Autowired
-    private GoogleTtsService googleTtsService;
+//    @Autowired
+//    private GoogleTtsService googleTtsService;
 
     // Twilio 초기화
     public TwilioService() {
