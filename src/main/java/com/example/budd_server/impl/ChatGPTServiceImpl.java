@@ -216,8 +216,17 @@ public class ChatGPTServiceImpl implements ChatGPTService {
         Map<String, Object> resultMap = new HashMap<>();
         try {
             ObjectMapper om = new ObjectMapper();
-            // String -> HashMap 역직렬화를 구성
+            // String -> HashMap 역직렬화
             resultMap = om.readValue(response.getBody(), new TypeReference<>() {});
+
+            // 응답에서 "choices" 배열의 첫 번째 "text" 값 추출
+            String responseText = ((Map<String, Object>) ((List<Object>) resultMap.get("choices")).get(0)).get("text").toString();
+
+            // 불필요한 개행 제거 (필요한 경우)
+            responseText = responseText.trim();
+
+            System.out.println("Extracted Text: " + responseText);  // 분리된 텍스트 출력 및 확인
+
         } catch (JsonProcessingException e) {
             log.debug("JsonMappingException :: " + e.getMessage());
         } catch (RuntimeException e) {

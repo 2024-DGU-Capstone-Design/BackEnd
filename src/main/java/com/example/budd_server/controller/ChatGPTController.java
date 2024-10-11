@@ -59,11 +59,13 @@ public class ChatGPTController {
         ChatGPTDto chatGPTDto = new ChatGPTDto();
 
         // 입력 데이터를 받아서 프롬프트 설정
-        chatGPTDto.setResponsePrompt(
-                requestData.get("event")
-        );
+        String event = requestData.get("event");
+        System.out.println("Received event: " + event);  // 여기에서 event 값 확인
 
-        Map<String, Object> result = chatGPTService.legacyPrompt(chatGPTDto);
+        // 입력 데이터를 받아서 프롬프트 설정
+        chatGPTDto.setResponsePrompt(event);
+
+        Map<String, Object> result = chatGPTService.responsePrompt(chatGPTDto);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
