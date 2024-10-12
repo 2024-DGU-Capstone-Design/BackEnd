@@ -17,8 +17,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.disable())
-                .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화
+                .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화 (전체 비활성화)
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/media-stream").permitAll() // WebSocket 경로 허용
                         .anyRequest().permitAll() // 모든 요청 허용
                 )
                 .sessionManagement(session -> session

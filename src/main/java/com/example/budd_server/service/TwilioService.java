@@ -30,8 +30,8 @@ public class TwilioService {
 
     String ngrokBaseURL = dotenv.get("ngrok.baseURL");
 
-//    @Autowired
-//    private GoogleTtsService googleTtsService;
+    @Autowired
+    private GoogleTtsService googleTtsService;
 
     // Twilio 초기화
     public TwilioService() {
@@ -45,9 +45,11 @@ public class TwilioService {
         String mp3Url = ngrokBaseURL + "tts_output.mp3";
 
         // Twiml 생성
-        Play play = new Play.Builder(mp3Url).build();
-        VoiceResponse response = new VoiceResponse.Builder().play(play).build();
-        Twiml twiml = new Twiml(response.toXml());
+//        Play play = new Play.Builder(mp3Url).build();
+//        VoiceResponse response = new VoiceResponse.Builder().play(play).build();
+//        Twiml twiml = new Twiml(response.toXml());
+        Twiml twiml = new Twiml("<Response><Gather input='speech' timeout='5'><Play>" + mp3Url + "</Play></Gather></Response>");
+
 
         // Twilio로 전화 걸기
         initiateCall(toPhoneNumber, twiml);
@@ -64,6 +66,32 @@ public class TwilioService {
                 twiml
         ).create();
     }
+
+    public String startCall(String toPhoneNumber) {
+        String ttsFilePath = googleTtsService.generateTTS("안녕하세요, 오늘 하루 어떠셨나요?");
+        String mp3Url = ngrokBaseURL + "tts_output.mp3";
+
+        // Twiml 구성: WebSocket으로 음성 데이터 스트리밍, MP3 파일 재생
+        String twimlResponse = "<Response>" +
+                "<Start><Stream url='wss://" + ngrokBaseURL.substring(8) + "media-stream'/></Start>"
+                +  // WebSocket으로 Media Stream
+                "<Play>" + mp3Url + "</Play>" +  // 음성 파일 재생
+                "<Pause length='5'/>" +  // 5초 동안 응답 대기
+                "</Response>";
+
+        // Twilio 전화 걸기
+        Call call = Call.creator(
+                new PhoneNumber(toPhoneNumber),
+                new PhoneNumber(fromPhoneNumber),
+                new Twiml(twimlResponse)
+        ).create();
+
+        return "Call Started";
+    }
+
+
+
+
 
     public String startCallWithRecording(String toPhoneNumber) {
         // Twilio로 전화 걸기 설정 (recordingStatusCallback을 설정하여 녹음 파일 URL 받기)
@@ -86,37 +114,6 @@ public class TwilioService {
             file.delete();  // 파일 삭제
         }
     }
-
-    //twilio에서 받은 녹음 파일 URL을 STT로 처리하는 메소드
-//    public String processSttResponse(String recordingUrl) {
-//        try {
-//            RestTemplate restTemplate = new RestTemplate();
-//
-//            // 녹음 파일을 Google STT로 보낼 준비
-//            byte[] audioBytes = restTemplate.getForObject(recordingUrl, byte[].class);
-//            String encodedAudio = Base64.getEncoder().encodeToString(audioBytes);
-//
-//            Map<String, Object> body = new HashMap<>();
-//            body.put("audio", Map.of("content", encodedAudio));
-//            body.put("config", Map.of("languageCode", "ko-KR"));
-//
-//            // Google STT API 호출
-//            String googleSttUrl = "https://speech.googleapis.com/v1/speech:recognize?key=" + dotenv.get("google.apiKey");
-//            Map<String, Object> response = restTemplate.postForObject(googleSttUrl, body, Map.class);
-//
-//            // 음성 텍스트 추출
-//            String transcript = (String) ((Map<String, Object>) ((List<Map<String, Object>>) response.get("results")).get(0).get("alternatives")).get(0).get("transcript");
-//
-//            // 콘솔에 텍스트 출력
-//            System.out.println("Recognized Text: " + transcript);
-//
-//            return transcript;
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return "Error processing STT";
-//        }
-//    }
 
     // STT 결과 처리 (STT는 이후 구현할 부분)
     private String waitForResponse(int seconds, String audioFilePath) {
