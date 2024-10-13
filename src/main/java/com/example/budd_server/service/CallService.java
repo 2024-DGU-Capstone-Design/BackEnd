@@ -16,7 +16,8 @@ public class CallService {
 
     private final String ACCOUNT_SID = dotenv.get("TWILIO_ACCOUNT_SID");
     private final String AUTH_TOKEN = dotenv.get("TWILIO_AUTH_TOKEN");
-    private final String FROM_NUMBER = dotenv.get("TWILIO_PHONE_NUMBER");  // Twilio 발신 번호
+    private final String FROM_NUMBER = dotenv.get("TWILIO_PHONE_NUMBER");
+    private final String ACTION_URL = dotenv.get("TWILIO_ACTION_URL"); // ngrok 설정
 
     @Autowired
     private QuestionService questionService;
@@ -29,26 +30,35 @@ public class CallService {
     public Call makeCall(String to) {
         try {
             String firstQuestion = questionService.askFirstQuestion(); // 첫 질문 가져오기
-            String twimlResponse = "<Response>" +
-                    "<Gather input='speech' action='' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>" +  // 한국어 설정
-                    "<Say>" + firstQuestion + "</Say>" +
-                    "</Gather>" +
-                    "</Response>";
-
-            Twiml twiml = new Twiml(twimlResponse);
+            String twimlResponse = buildGatherTwiml(firstQuestion);
 
             return Call.creator(
-                            new PhoneNumber(to),
-                            new PhoneNumber(FROM_NUMBER),
-                            twiml
-                    )
-                    .setRecord(true)
-                    .create();
+                    new PhoneNumber(to),
+                    new PhoneNumber(FROM_NUMBER),
+                    new Twiml(twimlResponse)
+            ).setRecord(true).create();
         } catch (Exception e) {
             System.err.println("Error making call: " + e.getMessage());
             throw e;
         }
     }
 
+    // Gather를 구성하는 메서드
+    private String buildGatherTwiml(String question) {
+        return "<Response>" +
+                "<Gather input='speech' action='"+ ACTION_URL + "' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>" +
+                "<Say>" + question + "</Say>" +
+                "</Gather>" +
+                "</Response>";
+    }
 
+    // 다음 질문 요청 메서드
+    public void askNextQuestion(String to, String question) {
+        String twimlResponse = buildGatherTwiml(question);
+        Call.creator(
+                new PhoneNumber(to),
+                new PhoneNumber(FROM_NUMBER),
+                new Twiml(twimlResponse)
+        ).setRecord(true).create();
+    }
 }
