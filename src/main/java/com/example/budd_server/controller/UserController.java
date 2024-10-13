@@ -4,7 +4,6 @@ import com.example.budd_server.entity.User;
 import com.example.budd_server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"https://budd-client.vercel.app", "https://budd-report.vercel.app/", "http://localhost:5173"})
 @RestController
 @RequestMapping("/api")
 public class UserController {
