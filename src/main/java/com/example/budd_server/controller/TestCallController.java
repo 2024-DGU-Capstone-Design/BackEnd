@@ -15,7 +15,7 @@ public class TestCallController {
     private CallService callService;
 
     @GetMapping("/test/call")
-    public String makeTestCall(@RequestParam String to) {
+    public String makeTestCall(@RequestParam("to") String to) {
         try {
             Call call = callService.makeCall(to);
             System.out.println("Call SID: " + call.getSid());

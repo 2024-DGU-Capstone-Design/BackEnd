@@ -18,6 +18,10 @@ public class CallService {
     private final String AUTH_TOKEN = dotenv.get("TWILIO_AUTH_TOKEN");
     private final String FROM_NUMBER = dotenv.get("TWILIO_PHONE_NUMBER");
     private final String ACTION_URL = dotenv.get("TWILIO_ACTION_URL"); // ngrok 설정
+    private final String NGROK_URL = dotenv.get("ngrok.baseURL");
+
+    String mp3Url = NGROK_URL + "meal.mp3";
+
 
     @Autowired
     private QuestionService questionService;
@@ -47,7 +51,8 @@ public class CallService {
     private String buildGatherTwiml(String question) {
         return "<Response>" +
                 "<Gather input='speech' action='"+ ACTION_URL + "' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>" +
-                "<Say>" + question + "</Say>" +
+                "<Play>" + NGROK_URL + question + "</Play>" +  // 음성 파일 재생 +
+//                "<Say>" + question + "</Say>" +
                 "</Gather>" +
                 "</Response>";
     }

@@ -12,6 +12,7 @@ public class TwilioController {
 
     private final Dotenv dotenv = Dotenv.load();
     private final String ACTION_URL = dotenv.get("TWILIO_ACTION_URL");
+    private final String NGROK_URL = dotenv.get("ngrok.baseURL");
 
     @Autowired
     private QuestionService questionService;
@@ -47,7 +48,8 @@ public class TwilioController {
     private String buildGatherTwiml(String question) {
         return "<Response>" +
                 "<Gather input='speech' action='" + ACTION_URL + "' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>"+
-                "<Say>" + question + "</Say>" +
+//                "<Say>" + question + "</Say>" +
+                "<Play>" + NGROK_URL + question + "</Play>" +  // 음성 파일 재생
                 "</Gather>" +
                 "</Response>";
     }
