@@ -4,7 +4,6 @@ import com.example.budd_server.entity.User;
 import com.example.budd_server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"https://budd-client.vercel.app", "http://localhost:5173", "https://budd-report.vercel.app/"})
+
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -25,8 +25,8 @@ public class UserController {
     @GetMapping("/users")
     public ResponseEntity<Page<User>> getAllUsersByPage(
             @RequestParam(defaultValue = "1") int page) {
-        Page<User> usersPage = userService.getAllUsersByPage(page);
-        return ResponseEntity.ok(usersPage);  // Page 객체 반환
+        Page<User> usersPage = userService.getAllUsersByPage(page-1);
+        return ResponseEntity.ok(usersPage);
     }
 
     // 이름으로 사용자 조회
