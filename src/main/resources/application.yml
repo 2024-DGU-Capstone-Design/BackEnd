@@ -1,3 +1,7 @@
 spring:
   config:
     import: classpath:application-db.yml
+
+openai:
+  url:
+    legacy-prompt: https://api.openai.com/v1/completions

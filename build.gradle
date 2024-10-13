@@ -38,6 +38,9 @@ dependencies {
 	// mongoDB를 위한 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
+	// ChatGPT를 위한 의존성
+	runtimeOnly 'org.springframework.boot:spring-boot-starter-tomcat' // gradle 버전에 맞게 수정
+
 	// twilio 사용
 	implementation 'com.twilio.sdk:twilio:8.29.0'
 

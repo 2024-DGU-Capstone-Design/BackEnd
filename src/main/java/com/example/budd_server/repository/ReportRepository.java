@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReportRepository extends MongoRepository<Report, String> {
@@ -14,4 +15,6 @@ public interface ReportRepository extends MongoRepository<Report, String> {
 
     @Query("{ 'userId': ?0, 'month': { $gte: ?1, $lt: ?2 } }")
     Report findByUserIdAndMonth(int userId, LocalDate startOfMonth, LocalDate startOfNextMonth);
+
+    Optional<Report> findByUserIdAndMonth(int userId, LocalDate minusMonths);
 }

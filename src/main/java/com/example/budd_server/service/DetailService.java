@@ -64,11 +64,11 @@ public class DetailService {
         return responses;
     }
 
-    // 이번 달의 리포트 조회
+    // 이전 달의 리포트 조회
     public List<Report> getReportByUserIdAndMonth(int userId) {
         LocalDate now = LocalDate.now();
-        LocalDate startMonth = now.withDayOfMonth(1); // 이번 달 시작일
-        LocalDate endMonth = now.withDayOfMonth(now.lengthOfMonth()); // 이번 달 마지막일
+        LocalDate startMonth = now.minusMonths(1).withDayOfMonth(1); // 이전 달 시작일
+        LocalDate endMonth = now.minusMonths(1).withDayOfMonth(now.minusMonths(1).lengthOfMonth()); // 이전 달 마지막일
 
         List<Report> reports = reportRepository.findByUserIdAndMonthBetween(userId, startMonth, endMonth);
         System.out.println("Retrieved reports from repository: " + reports);
