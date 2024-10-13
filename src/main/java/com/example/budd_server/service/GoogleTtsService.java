@@ -46,7 +46,7 @@ public class GoogleTtsService {
 
             // Base64로 인코딩된 MP3 파일을 디코딩하여 저장
             byte[] decodedAudio = Base64.getDecoder().decode(audioContent);
-            String filePath = "src/main/resources/static/tts_output.mp3";  // 로컬 경로
+            String filePath = "src/main/resources/static/medicine.mp3";  // 로컬 경로
 
             try (FileOutputStream fos = new FileOutputStream(filePath)) {
                 fos.write(decodedAudio);
