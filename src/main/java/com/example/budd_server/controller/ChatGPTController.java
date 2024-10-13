@@ -12,6 +12,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping(value = "/api/v1/chatGpt")
+@CrossOrigin(origins = {"https://budd-client.vercel.app", "http://localhost:5173", "https://budd-report.vercel.app/"})
 public class ChatGPTController {
 
     private final ChatGPTService chatGPTService;

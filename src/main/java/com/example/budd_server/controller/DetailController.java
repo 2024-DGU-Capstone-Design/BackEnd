@@ -25,7 +25,9 @@ import java.util.Optional;
         리포트 데이터 조회: /api/detail/{userId}/report
         통화 기록 조회: /api/detail/{userId}/callRecord */
 
-@CrossOrigin(origins = {"https://budd-client.vercel.app", "https://budd-report.vercel.app/", "http://localhost:5173"})
+
+@CrossOrigin(origins = {"https://budd-client.vercel.app", "http://localhost:5173", "https://budd-report.vercel.app/"})
+
 @RestController
 @RequestMapping("/api")
 public class DetailController {
