@@ -27,7 +27,6 @@ import java.util.Optional;
 
 
 @CrossOrigin(origins = {"https://budd-client.vercel.app", "http://localhost:5173", "https://budd-report.vercel.app/"})
-
 @RestController
 @RequestMapping("/api")
 public class DetailController {
@@ -60,7 +59,7 @@ public class DetailController {
             }
             return ResponseEntity.ok(responses);
         } else if ("report".equalsIgnoreCase(type)) {
-            // 리포트 데이터 조회
+            // 이전 달 리포트 데이터 조회
             List<Report> reports = detailService.getReportByUserIdAndMonth(userId);
             if (reports == null || reports.isEmpty()) {
                 return ResponseEntity.status(404).body("Report 데이터를 찾을 수 없습니다.");
