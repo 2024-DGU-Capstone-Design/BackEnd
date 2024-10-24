@@ -29,4 +29,6 @@ public interface UserRepository extends MongoRepository<User, String> {
                 .max(Integer::compareTo)
                 .orElse(null);
     }
+
+    User findByPhoneNumber(String phoneNumber);
 }

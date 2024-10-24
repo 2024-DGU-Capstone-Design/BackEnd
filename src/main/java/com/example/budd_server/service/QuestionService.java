@@ -1,12 +1,25 @@
 package com.example.budd_server.service;
 
+import com.example.budd_server.entity.Response;
+import com.example.budd_server.entity.User;
+import com.example.budd_server.repository.ResponseRepository;
+import com.example.budd_server.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Service
 public class QuestionService {
+    @Autowired
+    private ResponseRepository responseRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean responseReceived = false;
@@ -27,7 +40,13 @@ public class QuestionService {
     }
 
     // 사용자의 응답을 처리하는 메서드
-    public String handleResponse(String response) {
+    public String handleResponse(String response, String phoneNumber) {
+        User user = userRepository.findByPhoneNumber(phoneNumber); // 전화번호로 사용자 찾기
+        if (user == null) {
+            return "사용자를 찾을 수 없습니다.";
+        }
+        int userId = user.getUserId(); // userId 가져오기
+
         if (currentQuestion == null || currentQuestion.isEmpty()) {
             System.out.println("currentQuestion이 설정되지 않았습니다. 기본 질문을 사용합니다.");
             currentQuestion = firstQuestion;  // 기본 질문 설정
@@ -41,61 +60,99 @@ public class QuestionService {
 
         // 응답의 마침표와 쉼표를 제거하고 비교
         String cleanedResponse = response.replace(".", "").replace(",", "").trim();
+        Optional<Boolean> commonResponse = handleCommonResponse(cleanedResponse);
 
         // 현재 질문에 따라 응답을 처리
         switch (currentQuestion) {
             case firstQuestion:
-                return handleFirstQuestion(cleanedResponse);
+                handleMealResponse(commonResponse, userId);
+                return handleFirstQuestion(commonResponse);
             case healthQuestion:
-                return handleHealthQuestion(cleanedResponse);
+                handleHealthResponse(commonResponse, userId);
+                return handleHealthQuestion(commonResponse);
             case medicineQuestion:
-                return handleMedicineQuestion(cleanedResponse);
+                handleMedicineResponse(commonResponse, userId);
+                return handleMedicineQuestion(commonResponse);
             case lastQuestion:
-                return "오늘도 건강하게 지내세요!";
+                handleMoodResponse(commonResponse, userId);
+                return lastQuestion;
             default:
                 return "죄송해요, 다시 한 번 말씀해 주세요.";
         }
     }
 
-    private String handleFirstQuestion(String response) {
-        if (response.equalsIgnoreCase("응 먹었어요")) {
-            currentQuestion = healthQuestion;  // 다음 질문 설정
-            System.out.println("응답 처리 후 다음 질문: " + currentQuestion);
-            return healthQuestion;  // 다음 질문 사용자에게 전달
-        } else if (response.equalsIgnoreCase("아니 안 먹었어요")) {
-            currentQuestion = healthQuestion;  // 다음 질문 설정
-            System.out.println("응답이 '아니'일 때 다음 질문: " + currentQuestion);
+    private String handleFirstQuestion(Optional<Boolean> response) {
+        if (response.isPresent()) {
+            currentQuestion = healthQuestion;
             return healthQuestion;
-        } else {
-            return "죄송해요, 다시 한 번 말씀해 주세요.";
         }
+        return "죄송해요, 다시 한 번 말씀해 주세요.";
     }
 
-    private String handleHealthQuestion(String response) {
-        if (response.equalsIgnoreCase("응 아파요")) {
+    private String handleHealthQuestion(Optional<Boolean> response) {
+        if (response.isPresent()) {
             currentQuestion = medicineQuestion;
-            return currentQuestion;  // 다음 질문 반환
-        } else {
-            currentQuestion = lastQuestion;
-            return lastQuestion;  // 다음 질문 반환
+            return medicineQuestion;
         }
+        currentQuestion = lastQuestion;
+        return lastQuestion;
     }
 
-    private String handleMedicineQuestion(String response) {
-        if (response.equalsIgnoreCase("응 먹었어요")) {
+    private String handleMedicineQuestion(Optional<Boolean> response) {
+        if (response.isPresent()) {
             currentQuestion = lastQuestion;
-            return currentQuestion;  // 다음 질문 반환
-        } else {
-            currentQuestion = lastQuestion;
-            return lastQuestion;  // 마지막 질문 반환
+            return lastQuestion;
         }
+        currentQuestion = lastQuestion;
+        return lastQuestion;
     }
 
-    private void startResponseTimer() {
-        scheduler.schedule(() -> {
-            if (!responseReceived) {
-                System.out.println("응답이 없습니다. 질문을 반복합니다.");
+    private void handleMealResponse(Optional<Boolean> response, int userId) {
+        handleResponseStorage(response, userId, "meal");
+    }
+
+    private void handleHealthResponse(Optional<Boolean> response, int userId) {
+        handleResponseStorage(response, userId, "disease");
+    }
+
+    private void handleMedicineResponse(Optional<Boolean> response, int userId) {
+        handleResponseStorage(response, userId, "medicine");
+    }
+
+    private void handleMoodResponse(Optional<Boolean> response, int userId) {
+        handleResponseStorage(response, userId, "mood");
+    }
+
+    private void handleResponseStorage(Optional<Boolean> response, int userId, String type) {
+        if (response.isPresent()) {
+            Response dbResponse = responseRepository.findByUserIdAndDate(userId, LocalDate.now());
+            if (dbResponse != null) {
+                switch (type) {
+                    case "meal":
+                        dbResponse.setMeal(response.get());
+                        break;
+                    case "disease":
+                        dbResponse.setDisease(response.get());
+                        break;
+                    case "medicine":
+                        dbResponse.setMedicine(response.get());
+                        break;
+                    case "mood":
+                        dbResponse.setMood(response.get());
+                        break;
+                }
+                responseRepository.save(dbResponse);
+                System.out.println(type + "에 대한 응답 저장: " + response.get());
             }
-        }, 30, TimeUnit.SECONDS);  // 응답 대기 30초
+        }
+    }
+
+    private Optional<Boolean> handleCommonResponse(String response) {
+        if (response.contains("응")) {
+            return Optional.of(true);
+        } else if (response.contains("아니")) {
+            return Optional.of(false);
+        }
+        return Optional.empty();
     }
 }

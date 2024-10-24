@@ -10,7 +10,11 @@ import java.util.List;
 
 @Repository
 public interface ResponseRepository extends MongoRepository<Response, String> {
+    boolean existsByUserIdAndDate(int userId, LocalDate date);
+
     List<Response> findByUserIdAndDateBetween(int userId, LocalDate startDate, LocalDate endDate);
 
     List<Response> findByDateBetween(LocalDateTime start, LocalDateTime end);
+
+    Response findByUserIdAndDate(int userId, LocalDate date);
 }
