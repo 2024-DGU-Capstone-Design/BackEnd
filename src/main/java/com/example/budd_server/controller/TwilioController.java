@@ -34,7 +34,7 @@ public class TwilioController {
 
             if (speechResult != null && !speechResult.isEmpty()) {
                 // QuestionService의 handleResponse 호출
-                String response = questionService.handleResponse(speechResult);
+                String response = questionService.handleResponse(speechResult, to);
                 return buildGatherTwiml(response);  // 다음 질문을 포함한 TwiML 반환
             } else {
                 return buildGatherTwiml("응답이 없습니다.");
