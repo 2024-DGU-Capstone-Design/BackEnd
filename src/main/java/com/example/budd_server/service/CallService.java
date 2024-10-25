@@ -89,14 +89,4 @@ public class CallService {
                 "</Gather>" +
                 "</Response>";
     }
-
-    // 다음 질문 요청 메서드
-    public void askNextQuestion(String to, String question) {
-        String twimlResponse = buildGatherTwiml(question);
-        Call.creator(
-                new PhoneNumber(to),
-                new PhoneNumber(FROM_NUMBER),
-                new Twiml(twimlResponse)
-        ).setRecord(true).create();
-    }
 }
