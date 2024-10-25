@@ -50,7 +50,10 @@ public class DetailController {
     }
 
     @GetMapping("/detail/{userId}/{type}")
-    public ResponseEntity<?> getData(@PathVariable int userId, @PathVariable String type) {
+    public ResponseEntity<?> getData(
+            @PathVariable int userId,
+            @PathVariable String type,
+            @RequestParam(value = "month", required = false) Integer month) {
         if ("response".equalsIgnoreCase(type)) {
             // 응답 데이터 조회
             List<Response> responses = detailService.getResponse(userId);
@@ -59,8 +62,14 @@ public class DetailController {
             }
             return ResponseEntity.ok(responses);
         } else if ("report".equalsIgnoreCase(type)) {
-            // 이전 달 리포트 데이터 조회
-            List<Report> reports = detailService.getReportByUserIdAndMonth(userId);
+            // 특정 달 리포트 데이터 조회 (month가 전달된 경우)
+            List<Report> reports;
+            if (month != null) {
+                reports = detailService.getReportByUserIdAndMonth(userId, month);
+            } else {
+                return ResponseEntity.badRequest().body("month 파라미터가 필요합니다.");
+            }
+
             if (reports == null || reports.isEmpty()) {
                 return ResponseEntity.status(404).body("Report 데이터를 찾을 수 없습니다.");
             }
