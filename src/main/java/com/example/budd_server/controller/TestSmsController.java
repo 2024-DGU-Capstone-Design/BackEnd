@@ -40,23 +40,20 @@ public class TestSmsController {
 
             User user = optionalUser.get();
 
-            // Calculate the start of the previous month and the next month
             LocalDate startOfPreviousMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);
             LocalDate startOfNextMonth = startOfPreviousMonth.plusMonths(1);
 
-            // Fetch the report for the previous month
             Report report = reportRepository.findByUserIdAndMonth(userId, startOfPreviousMonth, startOfNextMonth);
             if (report == null) {
                 return "이전 달의 리포트 데이터가 없습니다.";
             }
 
-            String monthString = startOfPreviousMonth.getMonthValue() + "월";
+            String monthString = String.format("%02d월", startOfPreviousMonth.getMonthValue());
+            String monthForUrl = String.format("%02d", startOfPreviousMonth.getMonthValue());
 
-            // Prepare report summary to send
-            String message = String.format("%s님의 %s 종합 리포트를 확인해 보세요! https://budd-report.vercel.app/report/%d",
-                    user.getName(), monthString, userId);
+            String message = String.format("%s님의 %s 종합 리포트를 확인해 보세요! https://budd-report.vercel.app/report/%d/%s",
+                    user.getName(), monthString, userId, monthForUrl);
 
-            // Send the report to the guardian (contact1)
             smsService.sendSms(user.getContact1(), message);
 
             return "사용자의 리포트를 성공적으로 전송했습니다.";
