@@ -1,8 +1,10 @@
 package com.example.budd_server.controller;
 
+import com.example.budd_server.service.GoogleTTSService;
 import com.example.budd_server.service.QuestionService;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +18,9 @@ public class TwilioController {
 
     @Autowired
     private QuestionService questionService;
+
+    @Autowired
+    private GoogleTTSService googleTTSService;
 
     @PostMapping("/twilio/handle-recording")
     public String handleRecording(
@@ -52,5 +57,18 @@ public class TwilioController {
                 "<Play>" + NGROK_URL + question + "</Play>" +  // 음성 파일 재생
                 "</Gather>" +
                 "</Response>";
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<String> generateTts(@RequestParam("text") String text) {
+        try {
+            // 서비스에서 음성 파일 생성 로직 호출
+            String filePath = googleTTSService.generateTTS(text);
+
+            // 파일 경로를 응답으로 반환
+            return ResponseEntity.ok("TTS file generated successfully. Path: " + filePath);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error generating TTS: " + e.getMessage());
+        }
     }
 }

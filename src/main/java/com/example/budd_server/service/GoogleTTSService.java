@@ -5,6 +5,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.FileOutputStream;
@@ -12,6 +13,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
 public class GoogleTTSService {
     Dotenv dotenv = Dotenv.load();
     String googleTtsApiKey = dotenv.get("google.apiKey");
