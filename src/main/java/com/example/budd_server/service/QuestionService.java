@@ -31,6 +31,12 @@ public class QuestionService {
     private final String medicineQuestion = "medicine.mp3";
     private final String lastQuestion = "last.mp3";
 
+    //응답 변수
+    private final String mealAnswer1  = "meal_answer1.mp3";
+    private final String mealAnswer2  = "meal_answer2.mp3";
+    private final String pardon  = "pardon.mp3";
+    private final String conclusion  = "conclusion.mp3";
+
     // 첫 질문을 요청하는 메서드
     public String askFirstQuestion() {
         responseReceived = false;
@@ -75,9 +81,9 @@ public class QuestionService {
                 return handleMedicineQuestion(commonResponse);
             case lastQuestion:
                 handleMoodResponse(commonResponse, userId);
-                return lastQuestion;
+                return conclusion;
             default:
-                return "죄송해요, 다시 한 번 말씀해 주세요.";
+                return pardon;
         }
     }
 
