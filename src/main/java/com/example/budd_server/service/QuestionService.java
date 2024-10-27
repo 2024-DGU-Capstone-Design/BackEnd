@@ -21,6 +21,9 @@ public class QuestionService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private GoogleTTSService googleTTSService;
+
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean responseReceived = false;
     private String currentQuestion = "";
@@ -36,6 +39,8 @@ public class QuestionService {
     private final String mealAnswer2  = "meal_answer2.mp3";
     private final String pardon  = "pardon.mp3";
     private final String conclusion  = "conclusion.mp3";
+
+    private final String gpt  = "gpt.mp3";
 
     // 첫 질문을 요청하는 메서드
     public String askFirstQuestion() {
@@ -80,19 +85,38 @@ public class QuestionService {
                 handleMedicineResponse(commonResponse, userId);
                 return handleMedicineQuestion(commonResponse);
             case lastQuestion:
-                handleMoodResponse(commonResponse, userId);
-                return conclusion;
+                handleMoodResponse(commonResponse, userId);  // 응답을 저장
+
+                // 사용자의 원본 응답을 그대로 전달
+                return handleLastQuestion(response);
+
             default:
                 return pardon;
         }
     }
+    private String handleLastQuestion(String userResponse) {
+        if (userResponse != null && !userResponse.isEmpty()) {
+            // 사용자의 응답을 TTS로 변환하여 파일 생성
+            System.out.println("사용자 응답: " + userResponse);
+            String filePath = googleTTSService.generateTTS(userResponse, "gpt.mp3");
+
+//            // 비동기로 파일 삭제 스케줄링 (1분 후)
+//            scheduler.schedule(() -> googleTTSService.deleteFile(filePath), 1, TimeUnit.MINUTES);
+
+            // 생성된 파일 경로 반환 (Twilio가 재생)
+            return filePath;
+        }
+        return conclusion;
+    }
+
+
 
     private String handleFirstQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
             currentQuestion = healthQuestion;
             return healthQuestion;
         }
-        return "죄송해요, 다시 한 번 말씀해 주세요.";
+        return pardon;
     }
 
     private String handleHealthQuestion(Optional<Boolean> response) {

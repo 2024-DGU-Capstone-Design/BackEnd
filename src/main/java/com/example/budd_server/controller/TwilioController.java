@@ -63,7 +63,7 @@ public class TwilioController {
     public ResponseEntity<String> generateTts(@RequestParam("text") String text) {
         try {
             // 서비스에서 음성 파일 생성 로직 호출
-            String filePath = googleTTSService.generateTTS(text);
+            String filePath = googleTTSService.generateTTS(text, "gpt.mp3");
 
             // 파일 경로를 응답으로 반환
             return ResponseEntity.ok("TTS file generated successfully. Path: " + filePath);

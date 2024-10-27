@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,9 +23,8 @@ public class GoogleTTSService {
 
     String GOOGLE_TTS_API_URL = "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + googleTtsApiKey;
 
-    public String generateTTS(String text) {
+    public String generateTTS(String text, String filename) {
         try {
-            // Google TTS 요청과 MP3 파일 저장 로직
             Map<String, Object> body = new HashMap<>();
             body.put("input", Map.of("text", text));
             body.put("voice", Map.of("languageCode", "ko-KR"));
@@ -34,24 +35,29 @@ public class GoogleTTSService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<Map> response = restTemplate.exchange(GOOGLE_TTS_API_URL, HttpMethod.POST, entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    GOOGLE_TTS_API_URL, HttpMethod.POST, entity, Map.class);
 
-            Map<String, Object> responseBody = response.getBody();
-            String audioContent = (String) responseBody.get("audioContent");
-
-            // Base64로 인코딩된 MP3 파일을 디코딩하여 저장
+            String audioContent = (String) response.getBody().get("audioContent");
             byte[] decodedAudio = Base64.getDecoder().decode(audioContent);
-            String filePath = "src/main/resources/static/medicine.mp3";  // 로컬 경로
 
+            String filePath = basePath + "/" + filename;
             try (FileOutputStream fos = new FileOutputStream(filePath)) {
                 fos.write(decodedAudio);
             }
-
-            return filePath;  // Twilio가 접근할 수 있는 파일 경로 반환
-
+            return filePath;  // 저장된 파일 경로 반환
         } catch (Exception e) {
             e.printStackTrace();
-            return "Error in Google TTS";
+            throw new RuntimeException("TTS 변환 오류: " + e.getMessage());
+        }
+    }
+
+    public void deleteFile(String filePath) {
+        try {
+            Files.deleteIfExists(Paths.get(filePath));
+            System.out.println("파일 삭제 완료: " + filePath);
+        } catch (Exception e) {
+            System.err.println("파일 삭제 실패: " + e.getMessage());
         }
     }
 }
