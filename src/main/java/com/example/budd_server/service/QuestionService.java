@@ -1,13 +1,17 @@
 package com.example.budd_server.service;
 
+import com.example.budd_server.dto.ChatGPTDto;
 import com.example.budd_server.entity.Response;
 import com.example.budd_server.entity.User;
 import com.example.budd_server.repository.ResponseRepository;
 import com.example.budd_server.repository.UserRepository;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,9 +25,17 @@ public class QuestionService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ChatGPTService chatGPTService;  // ChatGPTService 주입
+
+    @Autowired
+    private TTSService ttsService;
+
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean responseReceived = false;
     private String currentQuestion = "";
+    private final Dotenv dotenv = Dotenv.load();
+    private final String NGROK_URL = dotenv.get("ngrok.baseURL");
 
     // 질문 변수
     private final String firstQuestion = "meal.mp3";
@@ -74,8 +86,11 @@ public class QuestionService {
                 handleMedicineResponse(commonResponse, userId);
                 return handleMedicineQuestion(commonResponse);
             case lastQuestion:
-                handleMoodResponse(commonResponse, userId);
-                return lastQuestion;
+                String lastResponseUrl = handleMoodResponse(commonResponse, response, userId);
+                return "<Response><Play>" + lastResponseUrl + "</Play><Hangup/></Response>";
+
+
+
             default:
                 return "죄송해요, 다시 한 번 말씀해 주세요.";
         }
@@ -119,9 +134,28 @@ public class QuestionService {
         handleResponseStorage(response, userId, "medicine");
     }
 
-    private void handleMoodResponse(Optional<Boolean> response, int userId) {
+    private String handleMoodResponse(Optional<Boolean> response, String originalResponse, int userId) {
         handleResponseStorage(response, userId, "mood");
+
+        // ChatGPT 응답 요청 생성
+        ChatGPTDto chatGPTDto = new ChatGPTDto();
+        chatGPTDto.setResponsePrompt(originalResponse);
+
+        // ChatGPT API 호출 및 응답 가져오기
+        Map<String, Object> chatGPTResponse = chatGPTService.responsePrompt(chatGPTDto);
+
+        // ChatGPT 응답 텍스트 추출
+        String responseText = "";
+        if (chatGPTResponse.containsKey("choices")) {
+            responseText = ((Map<String, Object>) ((List<Object>) chatGPTResponse.get("choices")).get(0)).get("text").toString();
+        }
+
+        String ttsFileName = ttsService.convertTextToSpeech(responseText, "lastQuestion.mp3");
+
+        return ttsFileName;
     }
+
+
 
     private void handleResponseStorage(Optional<Boolean> response, int userId, String type) {
         if (response.isPresent()) {
@@ -143,6 +177,8 @@ public class QuestionService {
                 }
                 responseRepository.save(dbResponse);
                 System.out.println(type + "에 대한 응답 저장: " + response.get());
+                System.out.println("최종 질문 파일 설정: " + currentQuestion);
+
             }
         }
     }
