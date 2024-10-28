@@ -4,10 +4,11 @@ import com.example.budd_server.service.CallService;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Call;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+@CrossOrigin(origins = {"https://budd-client.vercel.app", "http://localhost:5173", "https://budd-report.vercel.app/"})
 @RestController
 public class TestCallController {
 

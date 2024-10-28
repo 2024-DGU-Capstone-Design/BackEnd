@@ -45,6 +45,7 @@ public class CallService {
     public Call makeCall(String to) {
         // 전화번호로 사용자 찾기
         String phoneNumber = "+" + to.replaceAll("\\s+", "");
+        System.out.println("입력된 전화번호: " + phoneNumber);
         User user = userRepository.findByPhoneNumber(phoneNumber);
         if (user == null) {
             throw new RuntimeException("사용자를 찾을 수 없습니다.");
