@@ -45,12 +45,29 @@ public class TwilioController {
         }
     }
 
+
     private String buildGatherTwiml(String question) {
-        return "<Response>" +
-                "<Gather input='speech' action='" + ACTION_URL + "' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>"+
-//                "<Say>" + question + "</Say>" +
-                "<Play>" + NGROK_URL + question + "</Play>" +  // 음성 파일 재생
-                "</Gather>" +
-                "</Response>";
+        System.out.println("NGROK_URL: " + NGROK_URL);
+        System.out.println("Question: " + question);
+
+
+        String questionUrl = "lastQuestion.mp3".equals(question)
+                ? NGROK_URL + "files/lastQuestion.mp3"  // 마지막 질문
+                : NGROK_URL + "files/" + question;      // 일반 질문 파일
+
+        if ("lastQuestion.mp3".equals(question)) {
+            // 마지막 질문 파일을 재생하고 통화 종료
+            return "<Response>" +
+                    "<Play>" + questionUrl + "</Play>" +
+                    "<Hangup/>" +
+                    "</Response>";
+        } else {
+            return "<Response>" +
+                    "<Gather input='speech' action='" + NGROK_URL + "twilio/handle-recording' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>" +
+                    "<Play>" + questionUrl + "</Play>" +
+                    "</Gather>" +
+                    "</Response>";
+        }
     }
+
 }
