@@ -41,7 +41,7 @@ public class GoogleTTSService {
             String audioContent = (String) response.getBody().get("audioContent");
             byte[] decodedAudio = Base64.getDecoder().decode(audioContent);
 
-            String filePath = basePath + "/" + filename;
+            String filePath = "src/main/resources/static/" + filename;
             try (FileOutputStream fos = new FileOutputStream(filePath)) {
                 fos.write(decodedAudio);
             }

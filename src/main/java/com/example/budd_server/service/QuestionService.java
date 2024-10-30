@@ -99,12 +99,13 @@ public class QuestionService {
             // 사용자의 응답을 TTS로 변환하여 파일 생성
             System.out.println("사용자 응답: " + userResponse);
             String filePath = googleTTSService.generateTTS(userResponse, "gpt.mp3");
+            System.out.println("음성 경로: " + filePath);
 
 //            // 비동기로 파일 삭제 스케줄링 (1분 후)
 //            scheduler.schedule(() -> googleTTSService.deleteFile(filePath), 1, TimeUnit.MINUTES);
 
             // 생성된 파일 경로 반환 (Twilio가 재생)
-            return filePath;
+            return gpt;
         }
         return conclusion;
     }
