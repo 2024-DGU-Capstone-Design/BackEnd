@@ -28,6 +28,7 @@ dependencies {
 	implementation 'io.github.cdimascio:dotenv-java:2.3.0'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'com.google.cloud:google-cloud-speech:4.46.0'
+	implementation 'com.google.cloud:google-cloud-texttospeech:2.6.0'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
@@ -43,6 +44,10 @@ dependencies {
 
 	// twilio 사용
 	implementation 'com.twilio.sdk:twilio:8.29.0'
+
+	// 구글 스토리지 사용
+	implementation 'com.google.cloud:google-cloud-storage:2.1.4'
+
 
 }
 
