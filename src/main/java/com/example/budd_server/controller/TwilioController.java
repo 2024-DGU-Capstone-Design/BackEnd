@@ -63,7 +63,7 @@ public class TwilioController {
                     "</Response>";
         } else {
             return "<Response>" +
-                    "<Gather input='speech' action='" + NGROK_URL + "twilio/handle-recording' method='POST' timeout='30' speechTimeout='auto' language='ko-KR'>" +
+                    "<Gather input='speech' action='" + NGROK_URL + "twilio/handle-recording' method='POST' timeout='15' speechTimeout='auto' language='ko-KR'>" +
                     "<Play>" + questionUrl + "</Play>" +
                     "</Gather>" +
                     "</Response>";

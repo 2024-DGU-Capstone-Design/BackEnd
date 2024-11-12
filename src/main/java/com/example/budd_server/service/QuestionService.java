@@ -26,7 +26,7 @@ public class QuestionService {
     private UserRepository userRepository;
 
     @Autowired
-    private ChatGPTService chatGPTService;  // ChatGPTService 주입
+    private ChatGPTService chatGPTService;
 
     @Autowired
     private TTSService ttsService;
@@ -37,7 +37,6 @@ public class QuestionService {
     private final Dotenv dotenv = Dotenv.load();
     private final String NGROK_URL = dotenv.get("ngrok.baseURL");
 
-    // 질문 변수
     private final String firstQuestion = "meal.mp3";
     private final String healthQuestion = "health.mp3";
     private final String medicineQuestion = "medicine.mp3";
@@ -46,35 +45,49 @@ public class QuestionService {
     // 첫 질문을 요청하는 메서드
     public String askFirstQuestion() {
         responseReceived = false;
-        currentQuestion = firstQuestion;  // 첫 질문 설정
-        System.out.println("첫 질문 설정: " + currentQuestion);
-        return currentQuestion;  // 첫 질문 반환
+        currentQuestion = firstQuestion;
+        startNoResponseCheck();  // 응답 대기 타이머 시작
+        return currentQuestion;
     }
 
-    // 사용자의 응답을 처리하는 메서드
     public String handleResponse(String response, String phoneNumber) {
-        User user = userRepository.findByPhoneNumber(phoneNumber); // 전화번호로 사용자 찾기
+        responseReceived = true;  // 응답이 도착했음을 표시
+
+        User user = userRepository.findByPhoneNumber(phoneNumber);
         if (user == null) {
             return "사용자를 찾을 수 없습니다.";
         }
-        int userId = user.getUserId(); // userId 가져오기
+        int userId = user.getUserId();
 
         if (currentQuestion == null || currentQuestion.isEmpty()) {
-            System.out.println("currentQuestion이 설정되지 않았습니다. 기본 질문을 사용합니다.");
-            currentQuestion = firstQuestion;  // 기본 질문 설정
+            currentQuestion = firstQuestion;
         }
 
-        responseReceived = true;
+        // lastQuestion일 때는 응답 판별 없이 그대로 저장하고 종료 처리
+        if (currentQuestion.equals(lastQuestion)) {
+            String lastResponseUrl = handleMoodResponse(Optional.empty(), response, userId);
+            return "<Response><Play>" + lastResponseUrl + "</Play><Hangup/></Response>";
+        }
 
-        // 현재 질문과 응답을 로그로 출력
-        System.out.println("현재 질문: " + currentQuestion);
-        System.out.println("사용자 응답: " + response);
+        // 예외 상황 처리
+        if (response == null || response.isEmpty()) {
+            return askAgainOrEndCall();  // 발화가 없는 경우
+        }
 
-        // 응답의 마침표와 쉼표를 제거하고 비교
         String cleanedResponse = response.replace(".", "").replace(",", "").trim();
         Optional<Boolean> commonResponse = handleCommonResponse(cleanedResponse);
 
-        // 현재 질문에 따라 응답을 처리
+        // 발화가 있지만 질문과 관련 없는 경우
+        if (commonResponse.isEmpty() && !isRepeatRequest(cleanedResponse)) {
+            return askAgain();  // 재질문
+        }
+
+        // "다시 말해줘", "뭐라고?" 같은 응답의 경우
+        if (isRepeatRequest(cleanedResponse)) {
+            return askAgain();  // 재질문
+        }
+
+        // 현재 질문에 따른 응답 처리
         switch (currentQuestion) {
             case firstQuestion:
                 handleMealResponse(commonResponse, userId);
@@ -88,12 +101,51 @@ public class QuestionService {
             case lastQuestion:
                 String lastResponseUrl = handleMoodResponse(commonResponse, response, userId);
                 return "<Response><Play>" + lastResponseUrl + "</Play><Hangup/></Response>";
-
-
-
             default:
                 return "죄송해요, 다시 한 번 말씀해 주세요.";
         }
+    }
+
+    private void startNoResponseCheck() {
+        scheduler.schedule(new Runnable() {
+            @Override
+            public void run() {
+                if (!responseReceived) {
+                    askAgainOrEndCall();
+                }
+            }
+        }, 15, TimeUnit.SECONDS);
+    }
+
+    private String askAgainOrEndCall() {
+        if (!responseReceived) {
+            responseReceived = false;
+            System.out.println("응답이 없어 재질문 또는 종료합니다.");
+
+            scheduler.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("15초 경과, 응답이 없는 경우를 확인 중입니다.");  // 예약된 작업 진입 로그
+                    if (!responseReceived) {
+                        System.out.println("답변이 없어 통화를 종료합니다.");  // 종료 로그
+                        // 실제 통화 종료 로직을 여기서 처리하도록 설정합니다.
+                    }
+                }
+            }, 15, TimeUnit.SECONDS);
+
+            return currentQuestion;
+        }
+        return null;
+    }
+
+
+    private boolean isRepeatRequest(String response) {
+        return response.contains("뭐라고") || response.contains("다시 말해줘");
+    }
+
+    private String askAgain() {
+        System.out.println("질문과 관련 없는 응답이므로 재질문을 요청합니다.");
+        return currentQuestion;
     }
 
     private String handleFirstQuestion(Optional<Boolean> response) {
@@ -101,7 +153,7 @@ public class QuestionService {
             currentQuestion = healthQuestion;
             return healthQuestion;
         }
-        return "죄송해요, 다시 한 번 말씀해 주세요.";
+        return askAgain();
     }
 
     private String handleHealthQuestion(Optional<Boolean> response) {
@@ -137,14 +189,11 @@ public class QuestionService {
     private String handleMoodResponse(Optional<Boolean> response, String originalResponse, int userId) {
         handleResponseStorage(response, userId, "mood");
 
-        // ChatGPT 응답 요청 생성
         ChatGPTDto chatGPTDto = new ChatGPTDto();
         chatGPTDto.setResponsePrompt(originalResponse);
 
-        // ChatGPT API 호출 및 응답 가져오기
         Map<String, Object> chatGPTResponse = chatGPTService.responsePrompt(chatGPTDto);
 
-        // ChatGPT 응답 텍스트 추출
         String responseText = "";
         if (chatGPTResponse.containsKey("choices")) {
             responseText = ((Map<String, Object>) ((List<Object>) chatGPTResponse.get("choices")).get(0)).get("text").toString();
@@ -154,8 +203,6 @@ public class QuestionService {
 
         return ttsFileName;
     }
-
-
 
     private void handleResponseStorage(Optional<Boolean> response, int userId, String type) {
         if (response.isPresent()) {
@@ -176,9 +223,6 @@ public class QuestionService {
                         break;
                 }
                 responseRepository.save(dbResponse);
-                System.out.println(type + "에 대한 응답 저장: " + response.get());
-                System.out.println("최종 질문 파일 설정: " + currentQuestion);
-
             }
         }
     }
