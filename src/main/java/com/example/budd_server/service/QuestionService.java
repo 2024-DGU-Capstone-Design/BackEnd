@@ -100,6 +100,8 @@ public class QuestionService {
             case firstQuestion:
                 handleMealResponse(commonResponse, userId);
                 return handleFirstQuestion(commonResponse);
+            case mealAnswer1:
+            case mealAnswer2:
             case healthQuestion:
                 handleHealthResponse(commonResponse, userId);
                 return handleHealthQuestion(commonResponse);
@@ -156,13 +158,29 @@ public class QuestionService {
         return currentQuestion;
     }
 
+//    handleFirstQuestion(Optional<Boolean> response) {
+//        if (response.isPresent()) {
+//            currentQuestion = healthQuestion;
+//            return healthQuestion;
+//        }
+//        return askAgain();
+//    }
+
     private String handleFirstQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
-            currentQuestion = healthQuestion;
-            return healthQuestion;
+            if (response.get()) {
+                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                currentQuestion = healthQuestion;
+                return mealAnswer1;
+            } else {
+                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                currentQuestion = healthQuestion;
+                return mealAnswer2;
+            }
         }
-        return askAgain();
+        return askAgain();  // 명확한 응답이 없는 경우, 재질문
     }
+
 
     private String handleHealthQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {

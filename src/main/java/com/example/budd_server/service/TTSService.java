@@ -13,7 +13,7 @@ public class TTSService {
 
     public String convertTextToSpeech(String text, String fileName) {
         // TTSService의 convertTextToSpeech에서 파일 경로 설정
-        String ttsFilePath = "src/main/resources/static/files/lastQuestion.mp3";
+        String ttsFilePath = "src/main/resources/static/lastQuestion.mp3";
 
 
         try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
