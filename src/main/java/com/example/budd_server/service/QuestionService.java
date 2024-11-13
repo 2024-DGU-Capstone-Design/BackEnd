@@ -42,6 +42,14 @@ public class QuestionService {
     private final String medicineQuestion = "medicine.mp3";
     private final String lastQuestion = "last.mp3";
 
+    private final String mealAnswer1 = "meal_answer1.mp3"; //좋아요, 앞으로도 잘 챙겨드세요. 건강은 어떠세요?
+    private final String mealAnswer2 = "meal_answer2.mp3"; //식사는 잘 챙겨 드셔야 해요. 건강은 어떠세요?
+    private final String medicineAnswer1 = "medicine_answer1.mp3"; //좋아요. 오늘 하루는 어떠셨나요?
+    private final String medicineAnswer2 = "medicine_answer2.mp3"; //약 잘 챙겨 드셔야 해요. 오늘 하루는 어떠셨나요?
+
+    private final String pardon = "pardon.mp3"; //죄송해요. 잘 들리지 않았어요. 다시 한 번 말씀해주시겠어요?
+
+
     // 첫 질문을 요청하는 메서드
     public String askFirstQuestion() {
         responseReceived = false;
