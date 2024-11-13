@@ -71,7 +71,7 @@ public class ChatGPTDto {
     }
     public void setResponsePrompt(String event) {
         String ResponsePrompt = """
-                    당신은 어르신의 이야기를 듣고 간단히 응답을 작성합니다.
+                    당신은 어르신의 이야기를 듣고 코멘트를 작성하는 역할입니다. 
                     당신은 "오늘 무슨 일이 있었나요?"라고 물었습니다.
 
                     [좋은예시]:
