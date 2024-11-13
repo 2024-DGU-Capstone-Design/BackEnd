@@ -58,6 +58,7 @@ public class QuestionService {
         return currentQuestion;
     }
 
+    //질문별 응답 처리 로직
     public String handleResponse(String response, String phoneNumber) {
         responseReceived = true;  // 응답이 도착했음을 표시
 
@@ -108,6 +109,8 @@ public class QuestionService {
             case medicineQuestion:
                 handleMedicineResponse(commonResponse, userId);
                 return handleMedicineQuestion(commonResponse);
+            case medicineAnswer1:
+            case medicineAnswer2:
             case lastQuestion:
                 String lastResponseUrl = handleMoodResponse(commonResponse, response, userId);
                 return "<Response><Play>" + lastResponseUrl + "</Play><Hangup/></Response>";
@@ -158,14 +161,7 @@ public class QuestionService {
         return currentQuestion;
     }
 
-//    handleFirstQuestion(Optional<Boolean> response) {
-//        if (response.isPresent()) {
-//            currentQuestion = healthQuestion;
-//            return healthQuestion;
-//        }
-//        return askAgain();
-//    }
-
+    //잘 지내셨나요? 밥은 드셨나요?
     private String handleFirstQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
             if (response.get()) {
@@ -182,22 +178,35 @@ public class QuestionService {
     }
 
 
+    //건강은 어떠세요?
     private String handleHealthQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
-            currentQuestion = medicineQuestion;
-            return medicineQuestion;
+            if (response.get()) {
+                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                currentQuestion = medicineQuestion;
+                return medicineQuestion;
+            } else {
+                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                currentQuestion = lastQuestion;
+                return medicineAnswer1;
+            }
         }
-        currentQuestion = lastQuestion;
-        return lastQuestion;
+        return askAgain();  // 명확한 응답이 없는 경우, 재질문
     }
 
     private String handleMedicineQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
-            currentQuestion = lastQuestion;
-            return lastQuestion;
+            if (response.get()) {
+                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                currentQuestion = lastQuestion;
+                return medicineAnswer1;
+            } else {
+                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                currentQuestion = lastQuestion;
+                return medicineAnswer2;
+            }
         }
-        currentQuestion = lastQuestion;
-        return lastQuestion;
+        return askAgain();  // 명확한 응답이 없는 경우, 재질문
     }
 
     private void handleMealResponse(Optional<Boolean> response, int userId) {
