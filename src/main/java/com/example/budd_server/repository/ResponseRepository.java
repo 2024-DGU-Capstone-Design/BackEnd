@@ -22,6 +22,6 @@ public interface ResponseRepository extends MongoRepository<Response, String> {
 
     Response findByUserIdAndDate(int userId, LocalDate date);
 
-    @Query("{ 'comment': { $ne: \"\" } }")
+    @Query("{ 'comment': { $exists: true, $ne: \"\" } }")
     Page<CommentProjection> findByCommentIsNotNull(Pageable pageable);
 }
