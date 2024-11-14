@@ -52,8 +52,8 @@ public class TwilioController {
 
 
         String questionUrl = "lastQuestion.mp3".equals(question)
-                ? NGROK_URL + "files/lastQuestion.mp3"  // 마지막 질문
-                : NGROK_URL + "files/" + question;      // 일반 질문 파일
+                ? NGROK_URL + "lastQuestion.mp3"  // 마지막 질문
+                : NGROK_URL + question;      // 일반 질문 파일
 
         if ("lastQuestion.mp3".equals(question)) {
             // 마지막 질문 파일을 재생하고 통화 종료

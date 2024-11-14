@@ -42,6 +42,14 @@ public class QuestionService {
     private final String medicineQuestion = "medicine.mp3";
     private final String lastQuestion = "last.mp3";
 
+    private final String mealAnswer1 = "meal_answer1.mp3"; //좋아요, 앞으로도 잘 챙겨드세요. 건강은 어떠세요?
+    private final String mealAnswer2 = "meal_answer2.mp3"; //식사는 잘 챙겨 드셔야 해요. 건강은 어떠세요?
+    private final String medicineAnswer1 = "medicine_answer1.mp3"; //좋아요. 오늘 하루는 어떠셨나요?
+    private final String medicineAnswer2 = "medicine_answer2.mp3"; //약 잘 챙겨 드셔야 해요. 오늘 하루는 어떠셨나요?
+
+    private final String pardon = "pardon.mp3"; //죄송해요. 잘 들리지 않았어요. 다시 한 번 말씀해주시겠어요?
+
+
     // 첫 질문을 요청하는 메서드
     public String askFirstQuestion() {
         responseReceived = false;
@@ -50,6 +58,7 @@ public class QuestionService {
         return currentQuestion;
     }
 
+    //질문별 응답 처리 로직
     public String handleResponse(String response, String phoneNumber) {
         responseReceived = true;  // 응답이 도착했음을 표시
 
@@ -92,12 +101,16 @@ public class QuestionService {
             case firstQuestion:
                 handleMealResponse(commonResponse, userId);
                 return handleFirstQuestion(commonResponse);
+            case mealAnswer1:
+            case mealAnswer2:
             case healthQuestion:
                 handleHealthResponse(commonResponse, userId);
                 return handleHealthQuestion(commonResponse);
             case medicineQuestion:
                 handleMedicineResponse(commonResponse, userId);
                 return handleMedicineQuestion(commonResponse);
+            case medicineAnswer1:
+            case medicineAnswer2:
             case lastQuestion:
                 String lastResponseUrl = handleMoodResponse(commonResponse, response, userId);
                 return "<Response><Play>" + lastResponseUrl + "</Play><Hangup/></Response>";
@@ -148,30 +161,52 @@ public class QuestionService {
         return currentQuestion;
     }
 
+    //잘 지내셨나요? 밥은 드셨나요?
     private String handleFirstQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
-            currentQuestion = healthQuestion;
-            return healthQuestion;
+            if (response.get()) {
+                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                currentQuestion = healthQuestion;
+                return mealAnswer1;
+            } else {
+                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                currentQuestion = healthQuestion;
+                return mealAnswer2;
+            }
         }
-        return askAgain();
+        return askAgain();  // 명확한 응답이 없는 경우, 재질문
     }
 
+
+    //건강은 어떠세요?
     private String handleHealthQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
-            currentQuestion = medicineQuestion;
-            return medicineQuestion;
+            if (response.get()) {
+                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                currentQuestion = medicineQuestion;
+                return medicineQuestion;
+            } else {
+                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                currentQuestion = lastQuestion;
+                return medicineAnswer1;
+            }
         }
-        currentQuestion = lastQuestion;
-        return lastQuestion;
+        return askAgain();  // 명확한 응답이 없는 경우, 재질문
     }
 
     private String handleMedicineQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
-            currentQuestion = lastQuestion;
-            return lastQuestion;
+            if (response.get()) {
+                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                currentQuestion = lastQuestion;
+                return medicineAnswer1;
+            } else {
+                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                currentQuestion = lastQuestion;
+                return medicineAnswer2;
+            }
         }
-        currentQuestion = lastQuestion;
-        return lastQuestion;
+        return askAgain();  // 명확한 응답이 없는 경우, 재질문
     }
 
     private void handleMealResponse(Optional<Boolean> response, int userId) {
