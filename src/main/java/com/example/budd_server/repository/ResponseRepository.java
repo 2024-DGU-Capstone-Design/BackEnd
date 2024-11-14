@@ -24,4 +24,5 @@ public interface ResponseRepository extends MongoRepository<Response, String> {
 
     @Query("{ 'comment': { $exists: true, $ne: \"\" } }")
     Page<CommentProjection> findByCommentIsNotNull(Pageable pageable);
+
 }
