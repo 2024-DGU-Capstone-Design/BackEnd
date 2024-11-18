@@ -12,11 +12,11 @@ import java.io.IOException;
 public class TTSService {
 
     public String convertTextToSpeech(String text, String fileName) {
-        // TTSService의 convertTextToSpeech에서 파일 경로 설정
-        String ttsFilePath = "src/main/resources/static/lastQuestion.mp3";
-
+        // 파일 경로를 src/resource 아래 지정
+        String ttsFilePath = "external/" + fileName + ".mp3";
 
         try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
+            // TTS 요청 생성
             SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
 
             VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
@@ -31,16 +31,17 @@ public class TTSService {
             // TTS API 호출하여 음성 데이터 생성
             SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
 
-            // 음성 파일로 저장
+            // 음성 파일 저장
             ByteString audioContents = response.getAudioContent();
             try (OutputStream out = new FileOutputStream(ttsFilePath)) {
                 out.write(audioContents.toByteArray());
                 System.out.println("Audio content written to file " + ttsFilePath);
             }
-            return fileName;
+            return ttsFilePath;
 
         } catch (IOException e) {
             System.err.println("TTS 변환 중 오류 발생: " + e.getMessage());
             return null;
         }
-    }}
+    }
+    }

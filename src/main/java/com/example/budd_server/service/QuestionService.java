@@ -9,6 +9,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,9 @@ public class QuestionService {
 
     private final String pardon = "pardon.mp3"; //죄송해요. 잘 들리지 않았어요. 다시 한 번 말씀해주시겠어요?
 
+    private static final int POST_CREATION_WAIT = 5000; // 파일 생성 후 추가 대기 시간 (밀리초)
+
+
 
     // 첫 질문을 요청하는 메서드
     public String askFirstQuestion() {
@@ -75,7 +79,7 @@ public class QuestionService {
         // lastQuestion일 때는 응답 판별 없이 그대로 저장하고 종료 처리
         if (currentQuestion.equals(lastQuestion)) {
             String lastResponseUrl = handleMoodResponse(Optional.empty(), response, userId);
-            return "<Response><Play>" + lastResponseUrl + "</Play><Hangup/></Response>";
+            return "<Response><Play>files/" + lastResponseUrl + "</Play><Hangup/></Response>";
         }
 
         // 예외 상황 처리
@@ -113,7 +117,7 @@ public class QuestionService {
             case medicineAnswer2:
             case lastQuestion:
                 String lastResponseUrl = handleMoodResponse(commonResponse, response, userId);
-                return "<Response><Play>" + lastResponseUrl + "</Play><Hangup/></Response>";
+                return "<Response><Play>files/" + lastResponseUrl + "</Play><Hangup/></Response>";
             default:
                 return "죄송해요, 다시 한 번 말씀해 주세요.";
         }
@@ -182,11 +186,11 @@ public class QuestionService {
     private String handleHealthQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
             if (response.get()) {
-                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                // "응"인 경우, medicine을 재생하고 다음 질문으로 넘어감
                 currentQuestion = medicineQuestion;
                 return medicineQuestion;
             } else {
-                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                // "아니"인 경우, medicineAnswer1을 재생하고 다음 질문으로 넘어감
                 currentQuestion = lastQuestion;
                 return medicineAnswer1;
             }
@@ -197,17 +201,19 @@ public class QuestionService {
     private String handleMedicineQuestion(Optional<Boolean> response) {
         if (response.isPresent()) {
             if (response.get()) {
-                // "응"인 경우, mealAnswer1을 재생하고 다음 질문으로 넘어감
+                // "응"인 경우, medicineAnswer1을 재생하고 다음 질문으로 넘어감
                 currentQuestion = lastQuestion;
                 return medicineAnswer1;
             } else {
-                // "아니"인 경우, mealAnswer2을 재생하고 다음 질문으로 넘어감
+                // "아니"인 경우, medicineAnswer2을 재생하고 다음 질문으로 넘어감
                 currentQuestion = lastQuestion;
                 return medicineAnswer2;
             }
         }
         return askAgain();  // 명확한 응답이 없는 경우, 재질문
     }
+
+
 
     private void handleMealResponse(Optional<Boolean> response, int userId) {
         handleResponseStorage(response, userId, "meal");
@@ -224,9 +230,9 @@ public class QuestionService {
     private String handleMoodResponse(Optional<Boolean> response, String originalResponse, int userId) {
         handleResponseStorage(response, userId, "mood");
 
+        // ChatGPT를 통해 응답 생성
         ChatGPTDto chatGPTDto = new ChatGPTDto();
         chatGPTDto.setResponsePrompt(originalResponse);
-
         Map<String, Object> chatGPTResponse = chatGPTService.responsePrompt(chatGPTDto);
 
         String responseText = "";
@@ -234,9 +240,21 @@ public class QuestionService {
             responseText = ((Map<String, Object>) ((List<Object>) chatGPTResponse.get("choices")).get(0)).get("text").toString();
         }
 
-        String ttsFileName = ttsService.convertTextToSpeech(responseText, "lastQuestion.mp3");
+        // TTS 파일 생성 (userId를 파일명으로 사용)
+        String ttsFilePath = String.valueOf(userId);
+        ttsService.convertTextToSpeech(responseText, ttsFilePath);
 
-        return ttsFileName;
+        waitForPostCreationDelay();
+        return userId + ".mp3"; // 파일 경로 반환
+    }
+
+    private void waitForPostCreationDelay() {
+        try {
+            Thread.sleep(POST_CREATION_WAIT); // 추가 대기 시간 (2초)
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("추가 대기 중 인터럽트 발생", e);
+        }
     }
 
     private void handleResponseStorage(Optional<Boolean> response, int userId, String type) {
@@ -270,4 +288,5 @@ public class QuestionService {
         }
         return Optional.empty();
     }
+
 }
