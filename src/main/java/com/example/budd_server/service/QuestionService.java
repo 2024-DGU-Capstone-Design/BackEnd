@@ -90,33 +90,46 @@ public class QuestionService {
         String cleanedResponse = response.replace(".", "").replace(",", "").trim();
         Optional<Boolean> commonResponse = handleCommonResponse(cleanedResponse);
 
-        // 발화가 있지만 질문과 관련 없는 경우
-        if (commonResponse.isEmpty() && !isRepeatRequest(cleanedResponse)) {
-            return askAgain();  // 재질문
-        }
-
-        // "다시 말해줘", "뭐라고?" 같은 응답의 경우
-        if (isRepeatRequest(cleanedResponse)) {
-            return askAgain();  // 재질문
-        }
+//        // 발화가 있지만 질문과 관련 없는 경우
+//        if (commonResponse.isEmpty() && !isRepeatRequest(cleanedResponse)) {
+//            return askAgain();  // 재질문
+//        }
+//
+//        // "다시 말해줘", "뭐라고?" 같은 응답의 경우
+//        if (isRepeatRequest(cleanedResponse)) {
+//            return askAgain();  // 재질문
+//        }
 
         // 현재 질문에 따른 응답 처리
         switch (currentQuestion) {
             case firstQuestion:
-                handleMealResponse(commonResponse, userId);
-                return handleFirstQuestion(commonResponse);
+                // meal 관련 응답 처리
+                Optional<Boolean> mealResponse = handleMealResponse(cleanedResponse);
+                if (mealResponse.isEmpty()) {
+                    return askAgain();  // 정의되지 않은 응답일 경우 재질문
+                }
+                handleMealResponse(mealResponse, userId); // 응답 저장
+                return handleFirstQuestion(mealResponse); // 다음 단계로 진행
             case mealAnswer1:
             case mealAnswer2:
             case healthQuestion:
-                handleHealthResponse(commonResponse, userId);
-                return handleHealthQuestion(commonResponse);
+                Optional<Boolean> healthResponse = handleHealthResponse(cleanedResponse);
+                if (healthResponse.isEmpty()) {
+                    return askAgain();  // 정의되지 않은 응답일 경우 재질문
+                }
+                handleHealthResponse(healthResponse, userId);
+                return handleHealthQuestion(healthResponse);
             case medicineQuestion:
-                handleMedicineResponse(commonResponse, userId);
-                return handleMedicineQuestion(commonResponse);
+                Optional<Boolean> medicineResponse = handleMealResponse(cleanedResponse);
+                if (medicineResponse.isEmpty()) {
+                    return askAgain();  // 정의되지 않은 응답일 경우 재질문
+                }
+                handleMedicineResponse(medicineResponse, userId);
+                return handleMedicineQuestion(medicineResponse);
             case medicineAnswer1:
             case medicineAnswer2:
             case lastQuestion:
-                String lastResponseUrl = handleMoodResponse(commonResponse, response, userId);
+                String lastResponseUrl = handleMoodResponse(Optional.empty(), response, userId);
                 return "<Response><Play>files/" + lastResponseUrl + "</Play><Hangup/></Response>";
             default:
                 return "죄송해요, 다시 한 번 말씀해 주세요.";
@@ -289,4 +302,106 @@ public class QuestionService {
         return Optional.empty();
     }
 
+    //식사 및 약 복용 여부 질문에 대한 응답 처리
+    private Optional<Boolean> handleMealResponse(String response) {
+        if (response == null || response.isBlank()) {
+            return Optional.empty();
+        }
+
+        // 텍스트 정규화: 특수기호 및 공백 제거
+        String normalizedResponse = response
+                .replaceAll("[^a-zA-Z가-힣0-9 ]", "")
+                .trim()
+                .toLowerCase();
+
+        // 긍정 답변들
+        String[] positiveResponses = {
+                "먹었어", "먹었어요", "먹을 거야", "어", "챙겨 먹었어"
+        };
+
+        // 부정 답변들
+        String[] negativeResponses = {
+                "아직", "안 먹었어", "안 먹었어요", "안 먹을 거야"
+        };
+
+        // 일치하는 긍정/부정 답변 확인
+        for (String positive : positiveResponses) {
+            if (normalizedResponse.equals(positive)) {
+                return Optional.of(true);
+            }
+        }
+
+        for (String negative : negativeResponses) {
+            if (normalizedResponse.equals(negative)) {
+                return Optional.of(false);
+            }
+        }
+
+        if (normalizedResponse.contains("응")) {
+            return Optional.of(true);
+        }
+
+        if (normalizedResponse.contains("아니")) {
+            return Optional.of(false);
+        }
+
+        // 추가 처리: 긍/부정을 유추할 수 있는 일반적인 표현 분석
+        if (normalizedResponse.contains("먹었")) {
+            return Optional.of(true);
+        } else if (normalizedResponse.contains("안 먹") || normalizedResponse.contains("못 먹")) {
+            return Optional.of(false);
+        }
+
+        // 예상치 못한 경우
+        return Optional.empty();
+    }
+
+    // "건강은 어떠세요?" 질문에 대한 응답 처리
+    private Optional<Boolean> handleHealthResponse(String response) {
+        if (response == null || response.isBlank()) {
+            return Optional.empty();
+        }
+
+        // 텍스트 정규화: 특수기호 및 공백 제거
+        String normalizedResponse = response
+                .replaceAll("[^a-zA-Z가-힣0-9 ]", "")
+                .trim()
+                .toLowerCase();
+
+        // 긍정 답변들 (아픈 상태)
+        String[] positiveResponses = {
+                "아파", "아파요", "문제 있어", "있어", "어", "아니야"
+        };
+
+        // 부정 답변들 (건강한 상태)
+        String[] negativeResponses = {
+                "괜찮아", "괜찮아요", "문제 없어", "건강해요", "건강해"
+        };
+
+        // 정확히 일치하는 긍정/부정 답변 확인
+        for (String positive : positiveResponses) {
+            if (normalizedResponse.equals(positive)) {
+                return Optional.of(true);
+            }
+        }
+
+        for (String negative : negativeResponses) {
+            if (normalizedResponse.equals(negative)) {
+                return Optional.of(false);
+            }
+        }
+
+        // '응', '네' 포함 시 긍정 처리
+        if (normalizedResponse.contains("응") && !normalizedResponse.contains("네")) {
+            return Optional.of(true);
+        }
+
+        // '아니', '없어' 포함 시 부정 처리
+        if (normalizedResponse.contains("아니") || normalizedResponse.contains("없어")) {
+            return Optional.of(false);
+        }
+
+        // 예상치 못한 경우
+        return Optional.empty();
+    }
 }
