@@ -1,47 +1,69 @@
 package com.example.budd_server.service;
 
-import com.google.cloud.texttospeech.v1.*;
-import com.google.protobuf.ByteString;
+import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.io.IOException;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class TTSService {
 
-    public String convertTextToSpeech(String text, String fileName) {
-        // 파일 경로를 src/resource 아래 지정
-        String ttsFilePath = "external/" + fileName + ".mp3";
+    Dotenv dotenv = Dotenv.load();
+    String googleTtsApiKey = dotenv.get("google.apiKey");
 
-        try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
-            // TTS 요청 생성
-            SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
+    private static final String GOOGLE_TTS_API_URL = "https://texttospeech.googleapis.com/v1/text:synthesize?key=";
 
-            VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
-                    .setLanguageCode("ko-KR")
-                    .setSsmlGender(SsmlVoiceGender.NEUTRAL)
-                    .build();
+    public void convertTextToSpeech(String text, String fileName) {
+        try {
+            // 요청 Body 생성
+            Map<String, Object> body = new HashMap<>();
+            body.put("input", Map.of("text", text));
+            body.put("voice", Map.of(
+                    "languageCode", "ko-KR",
+                    "ssmlGender", "NEUTRAL"
+            ));
+            body.put("audioConfig", Map.of("audioEncoding", "MP3"));
 
-            AudioConfig audioConfig = AudioConfig.newBuilder()
-                    .setAudioEncoding(AudioEncoding.MP3)
-                    .build();
+            // HTTP 요청 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Type", "application/json");
 
-            // TTS API 호출하여 음성 데이터 생성
-            SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            // 음성 파일 저장
-            ByteString audioContents = response.getAudioContent();
-            try (OutputStream out = new FileOutputStream(ttsFilePath)) {
-                out.write(audioContents.toByteArray());
-                System.out.println("Audio content written to file " + ttsFilePath);
+            // RestTemplate을 사용하여 POST 요청 전송
+            RestTemplate restTemplate = new RestTemplate();
+            String apiUrl = GOOGLE_TTS_API_URL + googleTtsApiKey;
+            ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, Map.class);
+
+            // 응답 처리
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody == null || !responseBody.containsKey("audioContent")) {
+                throw new RuntimeException("Google TTS 응답에서 audioContent를 찾을 수 없습니다.");
             }
-            return ttsFilePath;
 
-        } catch (IOException e) {
-            System.err.println("TTS 변환 중 오류 발생: " + e.getMessage());
-            return null;
+            String audioContent = (String) responseBody.get("audioContent");
+
+            // Base64 디코딩하여 MP3 파일로 저장
+            byte[] decodedAudio = Base64.getDecoder().decode(audioContent);
+            String filePath = "external/" + fileName + ".mp3";
+
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                fos.write(decodedAudio);
+            }
+
+            System.out.println("Audio content saved to: " + filePath);
+
+        } catch (Exception e) {
+            System.err.println("Google TTS 변환 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-    }
+}
