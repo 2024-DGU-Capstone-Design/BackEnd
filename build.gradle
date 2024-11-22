@@ -27,6 +27,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'io.github.cdimascio:dotenv-java:2.3.0'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'com.google.cloud:google-cloud-speech:4.46.0'
+	implementation 'com.google.cloud:google-cloud-texttospeech:2.6.0'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -35,6 +38,17 @@ dependencies {
 
 	// mongoDB를 위한 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+	// ChatGPT를 위한 의존성
+	runtimeOnly 'org.springframework.boot:spring-boot-starter-tomcat' // gradle 버전에 맞게 수정
+
+	// twilio 사용
+	implementation 'com.twilio.sdk:twilio:8.29.0'
+
+	// 구글 스토리지 사용
+	implementation 'com.google.cloud:google-cloud-storage:2.1.4'
+
+
 }
 
 tasks.named('test') {

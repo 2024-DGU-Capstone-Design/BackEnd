@@ -17,4 +17,5 @@ public class Response {
     private Boolean disease;
     private Boolean medicine;
     private Boolean mood;
+    private String comment;
 }

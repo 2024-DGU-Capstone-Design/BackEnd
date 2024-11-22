@@ -6,7 +6,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends MongoRepository<User, String> {
     List<User> findByName(String name);
+    List<User> findAll();
     Optional<User> findByUserId(int userId);
 
     // 페이지네이션
@@ -29,4 +29,6 @@ public interface UserRepository extends MongoRepository<User, String> {
                 .max(Integer::compareTo)
                 .orElse(null);
     }
+
+    User findByPhoneNumber(String phoneNumber);
 }

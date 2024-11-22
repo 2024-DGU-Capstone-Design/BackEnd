@@ -36,12 +36,14 @@ public class DetailService {
         LocalDate now = LocalDate.now();
         LocalDate firstDayOfMonth = now.withDayOfMonth(1);
         LocalDate lastDayOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+        LocalDate previousMonth = now.minusMonths(1).withDayOfMonth(1); // 이전 달 시작일
+        LocalDate endPreviousMonth = now.minusMonths(1).withDayOfMonth(now.minusMonths(1).lengthOfMonth()); // 이전 달 마지막일
 
         // 응답 데이터 조회
         List<Response> responses = responseRepository.findByUserIdAndDateBetween(userId, firstDayOfMonth, lastDayOfMonth);
 
         // 리포트 데이터 조회
-        List<Report> reports = reportRepository.findByUserIdAndMonthBetween(userId, firstDayOfMonth, lastDayOfMonth);
+        List<Report> reports = reportRepository.findByUserIdAndMonthBetween(userId, previousMonth, endPreviousMonth);
 
         // 통화 기록 조회 (현재 년도 기준)
         LocalDate startYear = now.withMonth(1).withDayOfMonth(1);
@@ -64,11 +66,11 @@ public class DetailService {
         return responses;
     }
 
-    // 이번 달의 리포트 조회
-    public List<Report> getReportByUserIdAndMonth(int userId) {
+    // 특정 달의 리포트 조회
+    public List<Report> getReportByUserIdAndMonth(int userId, int month) {
         LocalDate now = LocalDate.now();
-        LocalDate startMonth = now.withDayOfMonth(1); // 이번 달 시작일
-        LocalDate endMonth = now.withDayOfMonth(now.lengthOfMonth()); // 이번 달 마지막일
+        LocalDate startMonth = now.withMonth(month).withDayOfMonth(1); // 지정된 달의 시작일
+        LocalDate endMonth = startMonth.withDayOfMonth(startMonth.lengthOfMonth()); // 지정된 달의 마지막일
 
         List<Report> reports = reportRepository.findByUserIdAndMonthBetween(userId, startMonth, endMonth);
         System.out.println("Retrieved reports from repository: " + reports);
