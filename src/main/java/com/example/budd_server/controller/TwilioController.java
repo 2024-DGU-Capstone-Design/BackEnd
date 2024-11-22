@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class TwilioController {
 
     private final Dotenv dotenv = Dotenv.load();
-    private final String ACTION_URL = dotenv.get("TWILIO_ACTION_URL");
     private final String NGROK_URL = dotenv.get("ngrok.baseURL");
 
     @Autowired
