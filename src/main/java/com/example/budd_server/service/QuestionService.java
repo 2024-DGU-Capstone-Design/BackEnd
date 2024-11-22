@@ -42,6 +42,7 @@ public class QuestionService {
     private final String healthQuestion = "health.mp3";
     private final String medicineQuestion = "medicine.mp3";
     private final String lastQuestion = "last.mp3";
+    private final String conclusion = "conclusion.mp3";
 
     private final String mealAnswer1 = "meal_answer1.mp3"; //좋아요, 앞으로도 잘 챙겨드세요. 건강은 어떠세요?
     private final String mealAnswer2 = "meal_answer2.mp3"; //식사는 잘 챙겨 드셔야 해요. 건강은 어떠세요?
@@ -50,7 +51,7 @@ public class QuestionService {
 
     private final String pardon = "pardon.mp3"; //죄송해요. 잘 들리지 않았어요. 다시 한 번 말씀해주시겠어요?
 
-    private static final int POST_CREATION_WAIT = 5000; // 파일 생성 후 추가 대기 시간 (밀리초)
+    private static final int POST_CREATION_WAIT = 2000; // 파일 생성 후 추가 대기 시간 (밀리초)
 
 
 
@@ -71,15 +72,10 @@ public class QuestionService {
             return "사용자를 찾을 수 없습니다.";
         }
         int userId = user.getUserId();
+        final String userMP3Path = userId + ".mp3";
 
         if (currentQuestion == null || currentQuestion.isEmpty()) {
             currentQuestion = firstQuestion;
-        }
-
-        // lastQuestion일 때는 응답 판별 없이 그대로 저장하고 종료 처리
-        if (currentQuestion.equals(lastQuestion)) {
-            String lastResponseUrl = handleMoodResponse(Optional.empty(), response, userId);
-            return "<Response><Play>files/" + lastResponseUrl + "</Play><Hangup/></Response>";
         }
 
         // 예외 상황 처리
@@ -88,17 +84,6 @@ public class QuestionService {
         }
 
         String cleanedResponse = response.replace(".", "").replace(",", "").trim();
-        Optional<Boolean> commonResponse = handleCommonResponse(cleanedResponse);
-
-//        // 발화가 있지만 질문과 관련 없는 경우
-//        if (commonResponse.isEmpty() && !isRepeatRequest(cleanedResponse)) {
-//            return askAgain();  // 재질문
-//        }
-//
-//        // "다시 말해줘", "뭐라고?" 같은 응답의 경우
-//        if (isRepeatRequest(cleanedResponse)) {
-//            return askAgain();  // 재질문
-//        }
 
         // 현재 질문에 따른 응답 처리
         switch (currentQuestion) {
@@ -129,10 +114,14 @@ public class QuestionService {
             case medicineAnswer1:
             case medicineAnswer2:
             case lastQuestion:
-                String lastResponseUrl = handleMoodResponse(Optional.empty(), response, userId);
-                return "<Response><Play>files/" + lastResponseUrl + "</Play><Hangup/></Response>";
+                String moodResponsePath = handleMoodResponse(Optional.empty(), response, userId);
+
+                // ChatGPT 응답(TTS) 파일 재생 처리
+                currentQuestion = moodResponsePath; // ChatGPT 응답 재생
+                return "<Response><Play>files/" + moodResponsePath + "</Play></Response>";
             default:
-                return "죄송해요, 다시 한 번 말씀해 주세요.";
+                handleCommentResponse(response, userId); // 응답 저장
+                return conclusion;
         }
     }
 
@@ -158,7 +147,7 @@ public class QuestionService {
                     System.out.println("15초 경과, 응답이 없는 경우를 확인 중입니다.");  // 예약된 작업 진입 로그
                     if (!responseReceived) {
                         System.out.println("답변이 없어 통화를 종료합니다.");  // 종료 로그
-                        // 실제 통화 종료 로직을 여기서 처리하도록 설정합니다.
+                        // 실제 통화 종료 로직을 여기서 처리하도록 설정
                     }
                 }
             }, 15, TimeUnit.SECONDS);
@@ -168,10 +157,6 @@ public class QuestionService {
         return null;
     }
 
-
-    private boolean isRepeatRequest(String response) {
-        return response.contains("뭐라고") || response.contains("다시 말해줘");
-    }
 
     private String askAgain() {
         System.out.println("질문과 관련 없는 응답이므로 재질문을 요청합니다.");
@@ -261,6 +246,19 @@ public class QuestionService {
         return userId + ".mp3"; // 파일 경로 반환
     }
 
+    private String handleCommentResponse(String response, int userId){
+        // 사용자의 응답을 DB에 저장
+        Response dbResponse = responseRepository.findByUserIdAndDate(userId, LocalDate.now());
+
+        if (dbResponse != null) {
+            dbResponse.setComment(response); // 응답 내용을 comment로 저장
+            responseRepository.save(dbResponse); // DB에 저장
+        }
+
+        currentQuestion = conclusion;
+        return conclusion;
+    }
+
     private void waitForPostCreationDelay() {
         try {
             Thread.sleep(POST_CREATION_WAIT); // 추가 대기 시간 (2초)
@@ -291,15 +289,6 @@ public class QuestionService {
                 responseRepository.save(dbResponse);
             }
         }
-    }
-
-    private Optional<Boolean> handleCommonResponse(String response) {
-        if (response.contains("응")) {
-            return Optional.of(true);
-        } else if (response.contains("아니")) {
-            return Optional.of(false);
-        }
-        return Optional.empty();
     }
 
     //식사 및 약 복용 여부 질문에 대한 응답 처리
@@ -375,7 +364,7 @@ public class QuestionService {
 
         // 부정 답변들 (건강한 상태)
         String[] negativeResponses = {
-                "괜찮아", "괜찮아요", "문제 없어", "건강해요", "건강해"
+                "괜찮아", "괜찮아요", "문제 없어", "건강해요", "건강해", "안 아파", "안 아파요"
         };
 
         // 정확히 일치하는 긍정/부정 답변 확인
@@ -397,7 +386,7 @@ public class QuestionService {
         }
 
         // '아니', '없어' 포함 시 부정 처리
-        if (normalizedResponse.contains("아니") || normalizedResponse.contains("없어")) {
+        if (normalizedResponse.contains("아니") || normalizedResponse.contains("없어") || normalizedResponse.contains("안")) {
             return Optional.of(false);
         }
 
